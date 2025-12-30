@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/Kamyar-EduAssistant/Kamyar-EduAssistant/d7426186a4ca938e6ea0ba6fc075496a8c56511e/logo-d.svg" sizes="512x512">
-    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/Kamyar-EduAssistant/Kamyar-EduAssistant/d7426186a4ca938e6ea0ba6fc075496a8c56511e/logo-n.svg" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/svg+xml" href="logo-d.svg" sizes="512x512">
+    <link rel="icon" type="image/svg+xml" href="logo-n.svg" media="(prefers-color-scheme: dark)">
     <title>✨کمک‌یار آموزشی</title>
 
     <!-- Tailwind CSS -->
@@ -633,7 +633,7 @@
                 max-height: 112px; /* مثال: 10rem (یا هر ارتفاع دیگری که لازم دارید) */
                 overflow-y: auto; /* برای نمایش اسکرول در صورت نیاز */
             }
-			#stellarium-iframe {
+            #stellarium-iframe {
                 height: 55vh;
                 zoom: 0.85; /* فقط برای موبایل */
             }
@@ -5563,11 +5563,18 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
 
             if (result.text) {
                 let rawText = result.text; // گرفتن متن از خروجی جدید سرور
-                resultEl.innerHTML = parseAndStyleResponse(rawText);
+                resultEl.innerHTML = parseAndStyleResponse(rawText).replace(/\\\[/g, "$$")
+                    .replace(/\\\]/g, "$$")
+                    .replace(/\\\(/g, "$")
+                    .replace(/\\\)/g, "$");
                 resultEl.classList.remove('hidden');
-                if (window.renderMathInElement && !resultEl.classList.contains('hidden')) { 
-                    renderMathInElement(resultEl, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] }); 
-                }
+                renderMathInElement(resultEl, { delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                    { left: '\\[', right: '\\]', display: true },
+                    { left: '\\(', right: '\\)', display: false }
+                    ]
+                }); 
             } else {
                 throw new Error('پاسخ معتبری دریافت نشد.');
             }
@@ -5707,8 +5714,15 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
 
             if (candidate && candidate.content?.parts?.[0]?.text) {
                 let rawText = candidate.content.parts[0].text;
-                resultEl.innerHTML = parseAndStyleResponse(rawText);
+                resultEl.innerHTML = parseAndStyleResponse(rawText)
                 resultEl.classList.remove('hidden');
+                renderMathInElement(resultEl, { delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                    { left: '\\[', right: '\\]', display: true },
+                    { left: '\\(', right: '\\)', display: false }
+                    ]
+                }); 
             } else {
                 throw new Error('پاسخ معتبری دریافت نشد.');
             }
@@ -6312,8 +6326,12 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
             
             // 2. Headers, Bold, Images, Newlines
             html = html
-                .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold my-3 text-right">$1</h3>')
-                .replace(/^#### (.*$)/gm, '<h4 class="text-lg font-semibold mt-4 mb-2 text-right">$1</h4>')
+                .replace(/\\\[/g, "$$")
+                .replace(/\\\]/g, "$$")
+                .replace(/\\\(/g, "$")
+                .replace(/\\\)/g, "$")
+                .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold my-3">$1</h3>')
+                .replace(/^#### (.*$)/gm, '<h4 class="text-lg font-semibold mt-4 mb-2">$1</h4>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
                 .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
@@ -6321,6 +6339,7 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
                     return `<code class="px-1 rounded">${escaped}</code>`;
                 })
                 .replace(/\n/g, '<br>');
+                
             
             // 3. Clean up
             html = html.replace(/(<\/h3>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
@@ -6499,6 +6518,4 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
 
     </script>
 </body>
-
 </html>
-
