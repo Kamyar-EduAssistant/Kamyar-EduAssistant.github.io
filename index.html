@@ -633,6 +633,10 @@
                 max-height: 112px; /* مثال: 10rem (یا هر ارتفاع دیگری که لازم دارید) */
                 overflow-y: auto; /* برای نمایش اسکرول در صورت نیاز */
             }
+			#stellarium-iframe {
+                height: 55vh;
+                zoom: 0.85; /* فقط برای موبایل */
+            }
         }
     </style>
 </head>
@@ -6205,7 +6209,11 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
             }
         }
         if (toolId === 'stellarium') {
-            document.getElementById('stellarium-iframe').src = 'https://stellarium-web.org/';
+            const iframe = document.getElementById('stellarium-iframe');
+
+            if (!iframe.getAttribute('src')) {
+                iframe.setAttribute('src', 'https://stellarium-web.org/');
+            }
         }
         pageTitle.textContent = title;
     }
@@ -6493,3 +6501,4 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
 </body>
 
 </html>
+
