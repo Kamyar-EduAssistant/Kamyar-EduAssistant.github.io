@@ -3220,81 +3220,81 @@
             return new Blob([view], { type: 'audio/wav' });
         }
 
-/**
- * کپی کردن متن پاسخ هوش مصنوعی (innerText) در کلیپ بورد.
- * از Fallback (ایجاد TextArea موقت) برای سازگاری در دستگاه‌های موبایل استفاده می‌کند.
- */
-function copyAiResponse() {
-    const outputDiv = document.getElementById('ai-output');
-    // استفاده از innerText برای گرفتن متن خالص بدون HTML
-    const responseText = outputDiv.innerText;
+        /**
+        * کپی کردن متن پاسخ هوش مصنوعی (innerText) در کلیپ بورد.
+        * از Fallback (ایجاد TextArea موقت) برای سازگاری در دستگاه‌های موبایل استفاده می‌کند.
+        */
+        function copyAiResponse() {
+            const outputDiv = document.getElementById('ai-output');
+            // استفاده از innerText برای گرفتن متن خالص بدون HTML
+            const responseText = outputDiv.innerText;
 
-    // --- تابع کمکی Fallback برای کپی کردن ---
-    function fallbackCopy(text) {
-        let success = false;
-        try {
-            // 1. ایجاد یک textarea موقت و پنهان
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            
-            // پنهان کردن textarea و جلوگیری از اسکرول صفحه
-            textarea.style.position = 'fixed'; 
-            textarea.style.top = '0';
-            textarea.style.left = '0';
-            textarea.style.opacity = '0'; // کاملا مخفی
-            
-            document.body.appendChild(textarea);
-            
-            // 2. انتخاب و اجرای دستور کپی
-            textarea.focus();
-            textarea.select();
-            
-            // document.execCommand('copy') - روش قدیمی اما سازگار با موبایل‌ها
-            success = document.execCommand('copy'); 
-            
-            document.body.removeChild(textarea);
+            // --- تابع کمکی Fallback برای کپی کردن ---
+            function fallbackCopy(text) {
+                let success = false;
+                try {
+                    // 1. ایجاد یک textarea موقت و پنهان
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    
+                    // پنهان کردن textarea و جلوگیری از اسکرول صفحه
+                    textarea.style.position = 'fixed'; 
+                    textarea.style.top = '0';
+                    textarea.style.left = '0';
+                    textarea.style.opacity = '0'; // کاملا مخفی
+                    
+                    document.body.appendChild(textarea);
+                    
+                    // 2. انتخاب و اجرای دستور کپی
+                    textarea.focus();
+                    textarea.select();
+                    
+                    // document.execCommand('copy') - روش قدیمی اما سازگار با موبایل‌ها
+                    success = document.execCommand('copy'); 
+                    
+                    document.body.removeChild(textarea);
 
-        } catch (err) {
-            console.error('Fallback copy failed:', err);
-            success = false;
-        }
-        
-        return success;
-    }
-
-    // --- اجرای منطق اصلی کپی ---
-
-    // 1. اگر API مدرن در دسترس است، آن را امتحان کن
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(responseText).then(() => {	
-            console.log("متن پاسخ با موفقیت کپی شد (مدرن).");
-            showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
-        }).catch(err => {
-            console.warn('Modern clipboard failed. Trying fallback...', err);
-            // 2. اگر روش مدرن شکست خورد، از Fallback استفاده کن
-            const success = fallbackCopy(responseText);
-            
-            if (success) {
-                console.log("متن پاسخ با موفقیت کپی شد (Fallback).");
-                showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
-            } else {
-                console.error('خطا در کپی کردن متن:', err);
-                showMessageBox("خـطا!", "خطا در کپی کردن متن!");
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    success = false;
+                }
+                
+                return success;
             }
-        });
-    } else {
-        // 3. اگر navigator.clipboard وجود ندارد، مستقیماً Fallback را اجرا کن
-        const success = fallbackCopy(responseText);
-        
-        if (success) {
-            console.log("متن پاسخ با موفقیت کپی شد (Fallback مستقیم).");
-            showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
-        } else {
-            console.error('خطا در کپی کردن متن: navigator.clipboard در دسترس نیست.');
-            showMessageBox("خـطا!", "خطا در کپی کردن متن!");
+
+            // --- اجرای منطق اصلی کپی ---
+
+            // 1. اگر API مدرن در دسترس است، آن را امتحان کن
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(responseText).then(() => {	
+                    console.log("متن پاسخ با موفقیت کپی شد (مدرن).");
+                    showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
+                }).catch(err => {
+                    console.warn('Modern clipboard failed. Trying fallback...', err);
+                    // 2. اگر روش مدرن شکست خورد، از Fallback استفاده کن
+                    const success = fallbackCopy(responseText);
+                    
+                    if (success) {
+                        console.log("متن پاسخ با موفقیت کپی شد (Fallback).");
+                        showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
+                    } else {
+                        console.error('خطا در کپی کردن متن:', err);
+                        showMessageBox("خـطا!", "خطا در کپی کردن متن!");
+                    }
+                });
+            } else {
+                // 3. اگر navigator.clipboard وجود ندارد، مستقیماً Fallback را اجرا کن
+                const success = fallbackCopy(responseText);
+                
+                if (success) {
+                    console.log("متن پاسخ با موفقیت کپی شد (Fallback مستقیم).");
+                    showMessageBox("کپی شد!", "پاسخ با موفقیت کپی شد.");
+                } else {
+                    console.error('خطا در کپی کردن متن: navigator.clipboard در دسترس نیست.');
+                    showMessageBox("خـطا!", "خطا در کپی کردن متن!");
+                }
+            }
         }
-    }
-}
 
         //<!-- Unit Converter Logic -->
         
@@ -6191,7 +6191,7 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
                 } else if (isNaN(deg)) {
                     if (tau === 0) throw new Error("گشتاور نمی‌تواند صفر باشد.");
                     const resDeg = (W / tau) * 180 / Math.PI;
-                    resultEl.innerHTML = `$\\theta = \\boxed{${toLatexScientificNotation(resDeg.toPrecision(12))} ^\\circ}$`;
+                    resultEl.innerHTML = `$\\theta = \\boxed{{${toLatexScientificNotation(resDeg.toPrecision(12))}} ^\\circ}$`;
                 }
             }
         } catch (error) {
