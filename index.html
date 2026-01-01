@@ -739,11 +739,11 @@
                  <div id="ai-output" dir="auto" class="justify">
                     <p class="text-gray-500 text-center">پاسخ در اینجا نمایش داده می‌شود...</p>
                  </div>
-                 <div id="ai-controls" class="flex item-center gap-2 mt-8">
-                 <button id="copy-button" onclick="copyAiResponse()" class="absolute bottom-2 left-12 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hidden" title="کپی کردن پاسخ">
+                 <div id="ai-controls" class="flex item-center gap-2 mt-8 hidden">
+                 <button id="copy-button" onclick="copyAiResponse()" class="absolute bottom-2 left-12 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="کپی کردن پاسخ">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                  </button>
-                 <button id="tts-button" onclick="playTTS()" class="absolute bottom-2 left-2 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition hidden" title="خواندن متن">
+                 <button id="tts-button" onclick="playTTS()" class="absolute bottom-2 left-2 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="خواندن متن">
                     <!-- Speaker Icon -->
                     <svg id="tts-icon-play" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     <!-- Loading Icon -->
@@ -3045,8 +3045,7 @@
             
             if (!isAdvanced) {
                 stopTTS(); 
-                document.getElementById('tts-button').classList.add('hidden');
-                document.getElementById('copy-button').classList.add('hidden');
+                document.getElementById('ai-controls').classList.add('hidden');
             } else {
                 plotContainer.classList.add('hidden');
                 plotContainer.innerHTML = '';
@@ -3108,8 +3107,8 @@
 
                                 functionPlot({
                                     target: '#plot-container',
-		                    width: plotWidth + 20,
-		                    height: plotHeight,
+                                    width: plotWidth + 20,
+                                    height: plotHeight,
                                     data: [{ fn: fnString, color: plotColor }],
                                     grid: true,
                                     tip: { xLine: true, yLine: true },
@@ -3124,7 +3123,7 @@
 
                     outputElement.innerHTML = parseAndStyleResponse(rawText);
                     
-                    if (!isAdvanced) { document.getElementById('tts-button').classList.remove('hidden'); document.getElementById('copy-button').classList.remove('hidden'); }
+                    if (!isAdvanced) { document.getElementById('ai-controls').classList.remove('hidden'); }
                     if (window.renderMathInElement) { renderMathInElement(outputElement, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] }); }
                     if (window.Prism) { Prism.highlightAll(); }
 
