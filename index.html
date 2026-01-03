@@ -30,6 +30,26 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/function-plot/dist/function-plot.js"></script>
 
+    <!-- Three.js for 3D Vector Ploting -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+        "three": "https://unpkg.com/three@0.150.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // متغیرها را به window متصل می‌کنیم تا در بقیه توابع شما قابل دسترسی باشند
+    window.THREE = THREE;
+    window.OrbitControls = OrbitControls;
+    </script>
+
     <!-- Prism.js for Highlight Code Blocks -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -204,6 +224,9 @@
         .text-slate-900 {
             color: rgb(15 23 42)
         }
+        .text-yellow-600 {
+            color: #ffd700; /* gold */
+        }
 
         /* Custom Message Box (Modal) */
         .message-box-overlay {
@@ -321,6 +344,22 @@
         }
         .comp-function {
             border-left: 10px solid !important;
+        }
+
+        #three-container canvas {
+            display: block;
+            cursor: grab;
+        }
+        #three-container canvas:active {
+            cursor: grabbing;
+        }
+
+        #three-container {
+            cursor: move; /* نشانگر موس را به شکل جابه‌جایی در می‌آورد */
+        }
+
+        #v-tooltip {
+            pointer-events: none; /* اجازه عبور کلیک از روی تولتیپ */
         }
 
         .solver-palette-tabs button { transition: all 0.2s ease-in-out; }
@@ -457,6 +496,9 @@
             .text-emerald-600 {
             	color: #17ff96 !important; 
             }
+            .text-blue-800 {
+                color: #76cbff !important;
+            }
             #ai-output p.text-gray-500 {
             	color: #94a3b8 !important;
             }
@@ -474,6 +516,9 @@
             .bg-slate-200 {
             	background-color: #121212 !important; /* Dark */
             	border-color: #475569 !important; /* Darker border */
+            }
+            .bg-blue-50 {
+                background-color: #262a2f !important;
             }
             .hover\:bg-indigo-100:hover {
             	background-color: #312e81c2 !important; 
@@ -626,6 +671,12 @@
 
             .plot-height {
                 height: 400px;
+            }
+            #three-container {
+                touch-action: none !important; /* جلوگیری از اسکرول مرورگر */
+                -webkit-tap-highlight-color: transparent; /* حذف کادر آبی هنگام لمس */
+                -webkit-user-select: none; /* جلوگیری از انتخاب متن */
+                user-select: none; /* استاندارد */
             }
 
             .solver-max-row-2 {
@@ -922,6 +973,8 @@
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-divisibility', 'بخش پذیری دو عدد')">بخش پذیری دو عدد</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-divisors', 'شمارنده ها')">شمارنده ها</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-sequences', 'دنباله‌ها')">دنباله‌ها</button>
+                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-gcd-lcm', 'ب.م.م و ک.م.م')">ب.م.م و ک.م.م</button>
+                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('vector-calculator', 'محاسبات بردارها')">محاسبات بردارها</button>
                  <!-- Add other math buttons here -->
             </div>
             <div id="math-tool-container">
@@ -1836,7 +1889,7 @@
                             <label for="arithmetic-operation" class="block font-bold mb-2">انتخاب عملیات:</label>
                             <div class="relative custom-select-container" data-sequence-type="arithmetic">
                                 <button type="button" id="arithmetic-operation" data-operation=""
-                                	class="custom-select-trigger w-full flex justify-between items-center border border-green-500 rounded-xl p-4 text-xl font-extrabold text-green-700 shadow-md hover:bg-emerald-100 transition duration-150 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50"
+                                	class="custom-select-trigger w-full flex justify-between items-center border border-green-500 rounded-xl p-4 text-lg font-extrabold text-green-700 shadow-md hover:bg-emerald-100 transition duration-150 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50"
                                 	onclick="toggleDropdown(this)">
                                 	<span id="arithmetic-operation-label">عملیات مورد نظر را انتخاب کنید...</span>
                                 	<svg id="arithmetic-chevron" class="w-6 h-6 text-emerald-800 transition-transform transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
@@ -1860,7 +1913,7 @@
                             <label for="geometric-operation" class="block font-bold mb-2">انتخاب عملیات:</label>
                             <div class="relative custom-select-container" data-sequence-type="geometric">
                                 <button type="button" id="geometric-operation" data-operation=""
-                                	class="custom-select-trigger w-full flex justify-between items-center border border-blue-500 rounded-xl p-4 text-xl font-extrabold text-blue-700 shadow-md hover:bg-blue-100 transition duration-150 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50"
+                                	class="custom-select-trigger w-full flex justify-between items-center border border-blue-500 rounded-xl p-4 text-lg font-extrabold text-blue-700 shadow-md hover:bg-blue-100 transition duration-150 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50"
                                 	onclick="toggleDropdown(this)">
                                 	<span id="geometric-operation-label">عملیات مورد نظر را انتخاب کنید...</span>
                                 	<svg id="geometric-chevron" class="w-6 h-6 text-blue-600 transition-transform transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
@@ -1897,6 +1950,80 @@
                         </div>
                     </div>
                 </div>
+                <div id="math-tool-gcd-lcm" class="math-tool hidden bg-white p-4 rounded-lg shadow">
+                    <p class="mb-2"><b>ب.م.م (بزرگ‌‌ترین مقسوم‌ٌعلیه مشترک):</b> بزرگترین عددی که هر دو عدد بر آن بخش‌پذیر باشند $(x,y,...)$.</p>
+                    <p class="mb-4"><b>ک.م.م (کوچک‌ترین مضرب مشترک):</b> کوچکترین عددی که بر هر دو عدد بخش‌پذیر باشد $[x,y,...]$.</p>
+                    <p class="text-gray-500 text-center text-sm mb-2">اعداد را با "فاصله" یا "کاما" از هم جدا کنید (مثلاً: 12, 18, 30)</p>
+                    <div class="mb-4">
+                        <input type="text" id="gcd-lcm-input" dir="ltr" 
+                            class="p-3 border focus:outline-none rounded-lg bg-white text-center w-full shadow-sm" 
+                            placeholder="12 18 30 ...">
+                    </div>
+                    <button onclick="calculateMultiGcdLcm()" class="p-3 w-full btn-3d btn-green">محاسبه</button>
+                    
+                    <div id="gcd-lcm-result" class="mt-6 text-2xl text-center p-4 rounded-lg hidden"></div>
+                </div>
+                <div id="vector-calculator" class="math-tool hidden bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex gap-2 items-center mb-2" dir="ltr">
+                        <p class="w-10"></p>
+                        <p class="w-full font-bold text-gray-600 text-center">$x$</p>
+                        <p class="w-full font-bold text-gray-600 text-center">$y$</p>
+                        <p class="w-full font-bold text-gray-600 text-center">$z$</p>
+                    </div>
+                    <div id="vector-list" class="space-y-3 mb-4">
+                        <div id="v-row-1" class="flex gap-2 items-center" dir="ltr">
+                            <span class="w-10 font-bold text-gray-600">$\vec{V_1}:$</span>
+                            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                        </div>
+                        <div id="v-row-2" class="flex gap-2 items-center" dir="ltr">
+                            <span class="w-10 font-bold text-gray-600">$\vec{V_2}:$</span>
+                            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                        </div>
+                    </div>
+                    <button onclick="addVectorRow()" class="px-4 py-2 w-full btn-3d bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-bold">+ افزودن بردار</button>
+                    <div class="flex flex-wrap grid grid-cols-2 md:grid-cols-4 gap-2 mb-6 mt-2">
+                        <button onclick="calculateAll('sum')" class="px-4 py-2 btn-3d btn-green">برآیند ($\sum$)</button>
+                        <button onclick="calculateAll('diff')" class="px-4 py-2 btn-3d bg-red-600 text-white">تفاضل ($\vec{a}-\vec{b}$)</button>
+                        <button onclick="calculateAll('cross')" class="px-4 py-2 btn-3d bg-blue-600 text-white">ضرب خارجی ($\vec{a} \times \vec{b}$)</button>
+                        <button onclick="calculateAll('dot')" class="px-4 py-2 btn-3d bg-purple-600 text-white">ضرب داخلی ($\vec{a} \cdot \vec{b}$)</button>
+                    </div>
+
+                    <div id="vector-latex-result" class="p-4 bg-gray-50 text-lg text-center rounded-lg border-r-4 border-blue-500 mb-4 hidden"></div>
+
+                    <div id="three-container" class="w-full rounded-lg overflow-hidden relative" style="height: 55vh;">
+                        <div class="absolute top-2 right-2 text-white text-xs bg-black/50 p-1 rounded">نمای سه‌بعدی تعاملی</div>
+                    </div>
+                    <div id="v-tooltip" style="position: absolute; display: none; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 5px; pointer-events: none; font-size: 14px; z-index: 1000;"></div>
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-t pt-4 text-gray-600">
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <h4 class="font-bold text-blue-800 mb-2 flex items-center">
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="id-13"></path></svg>
+                                راهنمای تعاملی
+                            </h4>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>با <b>کلیک و کشیدن</b>، زاویه دوربین را تغییر دهید.</li>
+                                <li>با <b>اسکرول (Scroll)</b>، روی بردارها زوم کنید.</li>
+                                <li>با <b>نگه داشتن موس</b> روی هر بردار، مختصات آن را ببینید.</li>
+                                <li>بردار <span class="text-yellow-600 font-bold">طلایی</span> همواره نتیجه نهایی محاسبه است.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <h4 class="font-bold text-gray-600 mb-2 flex items-center">
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                نکات ریاضی
+                            </h4>
+                            <p class="leading-relaxed">
+                                <b>ضرب داخلی:</b> حاصل یک عدد (اسکالر) است که تصویر یک بردار بر دیگری را نشان می‌دهد.<br>
+                                <b>ضرب خارجی:</b> حاصل برداری است که بر هر دو بردار اولیه <b>عمود</b> است (قانون دست راست).<br>
+                                <b>تفاضل:</b> بردار حاصل از مبدأ به سمت تفاضل مختصات رسم می‌شود.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="math-split-border" class="mt-5 border-t"></div>
             <h2 class="math-heading mt-5 text-2xl text-center font-bold">✨ابزارهای هوشمند ریاضی🛠️</h2>
@@ -1904,6 +2031,7 @@
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-explainer', 'توضیح مفاهیم و نظریات ریاضی')">توضیح مفاهیم و نظریات ریاضی</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-solver', 'حل گام به گام مسائل ریاضی')">حل گام به گام مسائل ریاضی</button>
             </div>
+
             <div id="math-smartTool-container">
                 <!-- Math Explainer -->
                 <div id="math-explainer" class="math-tool hidden">
@@ -2987,12 +3115,10 @@
                 const symbols = mathPalettes[key];
                 symbols.forEach(symbol => {
                     const btn = document.createElement('button');
-                    btn.className = 'btn-3d btn-gray math-symbol-btn';
+                    btn.className = 'btn-3d btn-gray math-symbol-btn relative group';
                     btn.dataset.insert = symbol.insert;
                     if (symbol.title) {
-
-	                btn.title = symbol.title;
-
+	                    btn.title = symbol.title;
                     }
                     container.appendChild(btn);
                     try {
@@ -3796,6 +3922,14 @@
                 tool.classList.remove('hidden');
                 tool.classList.remove('mt-6');
                 tool.classList.add('fadeIn-active');
+                // اضافه کردن این بخش: اگر ابزار بردار انتخاب شد، Three.js را چک کن
+                if (toolId === 'vector-calculator') {
+                    if (!scene) {
+                        initThree(); // اگر بار اول است، بساز
+                    } else {
+                        onWindowResize(); // اگر قبلاً ساخته شده، ابعاد را آپدیت کن
+                    }
+                }
                 // Re-render KaTeX in case the new tool has static formulas
                 if (window.renderMathInElement) {
                     renderMathInElement(tool);
@@ -4465,8 +4599,8 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
             }            
 	}
 
-const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark Mode (روشن) و #15803d برای Light Mode (تیره)
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark Mode (روشن) و #15803d برای Light Mode (تیره)
 	function plotPiecewiseFunction() {
             const { plotWidth, plotHeight } = getPlotDimensions('math-piecewise-target');
             const [xMinGlobal, xMaxGlobal] = getDomain('piecewise-xMin', 'piecewise-xMax');
@@ -5511,6 +5645,400 @@ const plotColour = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark 
             drawVennDiagram();
         }
     });
+
+    function calculateMultiGcdLcm() {
+        const inputVal = document.getElementById('gcd-lcm-input').value;
+        const resultEl = document.getElementById('gcd-lcm-result');
+        resultEl.style.color = isDarkMode ? 'white' : 'black';
+
+        try {
+            // استخراج اعداد از رشته (جداکننده: فاصله یا کاما)
+            const nums = inputVal.split(/[\s,]+/).map(n => parseInt(n)).filter(n => !isNaN(n) && n > 0);
+
+            if (nums.length < 2) {
+                throw new Error("لطفاً حداقل دو عدد مثبت وارد کنید.")
+            }
+
+            // توابع پایه
+            const gcd2 = (a, b) => b === 0 ? a : gcd2(b, a % b);
+            const lcm2 = (a, b) => (a * b) / gcd2(a, b);
+
+            // محاسبه برای کل آرایه
+            const finalGcd = nums.reduce((acc, curr) => gcd2(acc, curr));
+            const finalLcm = nums.reduce((acc, curr) => lcm2(acc, curr));
+
+            // ساخت نمایش لاتکس
+            const numsJoined = nums.join(', ');
+            const latexGcd = `(${numsJoined}) = \\boxed{${finalGcd}}`;
+            const latexLcm = `[${numsJoined}] = \\boxed{${finalLcm}}`;
+
+            resultEl.classList.remove('hidden');
+            resultEl.innerHTML = `
+                <div class="text-black mb-4">$${latexGcd}$</div>
+                <div class="text-black">$${latexLcm}$</div>
+            `;
+
+        } catch (error) {
+            resultEl.classList.remove('hidden');
+            resultEl.textContent = `خطا: ${error.message}`;
+            resultEl.style.color = 'red';
+        }
+
+        // رندر کردن لاتکس (KaTeX یا MathJax)
+        if (window.renderMathInElement) {
+            renderMathInElement(resultEl, { delimiters: [{left: '$', right: '$', display: false}] });
+        }
+    }
+    document.getElementById('gcd-lcm-input').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            calculateMultiGcdLcm();
+        }
+    });
+
+    let vectorCount = 2;
+    let scene, camera, renderer, arrows = [], controls;
+
+    // ایجاد ردیف جدید ورودی
+    function addVectorRow() {
+        vectorCount++;
+        const div = document.createElement('div');
+        div.className = "flex gap-2 items-center animate-fade-in";
+        div.id = `v-row-${vectorCount}`;
+        div.dir = "ltr";
+        div.innerHTML = `
+            <span class="w-10 font-bold text-gray-600">$\\vec{V_{${vectorCount}}}:$</span>
+            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <button onclick="removeVectorRow()" class="p-2 text-red-500 hover:text-red-700 shrink-0" title="حذف بردار">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+        `;
+        document.getElementById('vector-list').appendChild(div);
+        if (window.renderMathInElement) {
+            renderMathInElement(div, { delimiters: [{left: '$', right: '$', display: false}] });
+        }
+    }
+    function removeVectorRow() {
+        if (vectorCount > 2) {
+            const row = document.getElementById(`v-row-${vectorCount}`);
+            if (row) {
+                row.remove();
+                vectorCount--;
+            }
+        }
+    }
+
+    // تابع کمکی برای تشخیص تم فعلی (اگر کلاس dark در body یا html دارید)
+    function getThemeColors() {
+        if (isDarkMode) {
+            return {
+                background: 0x0f172a,
+                grid: 0x334155,
+                axes: 0x94a3b8
+            };
+        } else {
+            return {
+                background: 0xffffff,
+                grid: 0xe2e8f0,
+                axes: 0x64748b
+            };
+        }
+    }
+
+    const vectorColors = [
+        0xff4444, // V1: قرمز روشن
+        0x44ff44, // V2: سبز نئونی
+        0x9333ea, // V3: آبی آسمانی
+        0xff00ff, // V4: سرخابی
+        0xffa500, // V5: نارنجی
+        0x00ffff,  // V6: فیروزه‌ای
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff,
+        0xffffff
+    ];
+
+    // مقداردهی اولیه Three.js
+    // اضافه کردن تابع برای تنظیم سایز هنگام باز شدن ابزار
+    function onWindowResize() {
+        const container = document.getElementById('three-container');
+        if (!container || !renderer) return;
+        
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function initThree() {
+        const container = document.getElementById('three-container');
+        if (container.clientWidth === 0) return; // جلوگیری از خطا در حالت hidden
+        const colors = getThemeColors();
+
+        scene = new THREE.Scene();
+        if (isDarkMode) {
+            scene.background = new THREE.Color(0x0f172a);
+            const gridHelper = new THREE.GridHelper(10, 10, 0x444455, 0x222233);
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(gridHelper);
+            scene.add(axesHelper);
+        } else {
+            scene.background = new THREE.Color(0xffffff);
+            const gridHelper = new THREE.GridHelper(10, 10, 0xe2e8f0, 0xebebeb);
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(gridHelper);
+            scene.add(axesHelper);
+        }
+        
+        
+        camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); // برای کیفیت بهتر در موبایل
+        container.appendChild(renderer.domElement);
+
+        // تعریف رندرر (اگر از قبل تعریف نشده)
+        if (!renderer) {
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            container.appendChild(renderer.domElement);
+        }
+        renderer.setSize(container.clientWidth, container.clientHeight);
+
+        // بخش کلیدی: فعال‌سازی کنترل موس
+        try {
+            // دقت کنید: دیگر THREE. ندارد، چون مستقیماً وارد شده
+            controls = new OrbitControls(camera, renderer.domElement); 
+            
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            console.log("کنترل موس با موفقیت فعال شد");
+
+            // مخصوص موبایل:
+            controls.enableTouchRotate = true; // فعال‌سازی چرخش با لمس
+            controls.touchAction = 'none'; // جلوگیری از اسکرول خوردن کل صفحه موقع چرخاندن مدل
+        } catch (e) {
+            console.error("خطا در OrbitControls:", e);
+        }
+
+        const light = new THREE.AmbientLight(0xffffff, 1);
+        scene.add(light);
+
+        function createAxisLabel(text, position, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.font = 'bold 24px Cambria Math';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 32, 48);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.scale.set(1, 1, 1);
+            return sprite;
+        }
+
+        // اضافه کردن به صحنه (انتهای تابع initThree)
+        scene.add(createAxisLabel('X', new THREE.Vector3(5.5, 0, 0), '#ff4444')); // قرمز
+        scene.add(createAxisLabel('Y', new THREE.Vector3(0, 5.5, 0), '#44ff44')); // سبز
+        scene.add(createAxisLabel('Z', new THREE.Vector3(0, 0, 5.5), '#4444ff')); // آبی
+
+        camera.position.set(5, 5, 8);
+        camera.lookAt(0, 0, 0);
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // ابتدا چک می‌کنیم که آیا کنترل‌ها وجود دارند یا خیر
+        if (controls && typeof controls.update === 'function') {
+            controls.update();
+        }
+
+        // اگر می‌خواهید چرخش خودکار داشته باشید، فقط زمانی که کاربر با موس کار نمی‌کند بچرخد
+        // نکته: OrbitControls ویژگی به نام active ندارد، باید از متغیر خودمان استفاده کنیم یا حذفش کنیم
+        if (scene && renderer && camera) {
+            scene.rotation.y += 0.001; // اگر چرخش خودکار می‌خواهید این را فعال کنید
+            renderer.render(scene, camera);
+        }
+    }
+
+    // محاسبات اصلی
+    function calculateAll(type) {
+        if (!scene) initThree();
+        const colors = getThemeColors();
+        scene.background.set(colors.background);
+        const rows = document.querySelectorAll('#vector-list > div');
+        const vecs = Array.from(rows).map(row => ({
+            x: parseFloat(row.querySelector('.v-x').value) || 0,
+            y: parseFloat(row.querySelector('.v-y').value) || 0,
+            z: parseFloat(row.querySelector('.v-z').value) || 0
+        }));
+
+        if (vecs.length < 2) return alert("لطفاً حداقل دو بردار وارد کنید.");
+
+        let res = { x: 0, y: 0, z: 0 };
+        let latexStr = "";
+
+        // پاک کردن بردارهای قبلی از صحنه
+        arrows.forEach(a => scene.remove(a));
+        arrows = [];
+
+        if (type === 'sum') {
+            vecs.forEach(v => { res.x += v.x; res.y += v.y; res.z += v.z; });
+            latexStr = `\\vec{R} = \\sum_{i=1}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+        } else if (type === 'diff') {
+            // تفاضل بردار اول از دوم (یا به ترتیب ورود)
+            res.x = vecs[0].x - vecs[1].x;
+            res.y = vecs[0].y - vecs[1].y;
+            res.z = vecs[0].z - vecs[1].z;
+            // اگر بیش از دو بردار بود، بقیه را هم کم می‌کند
+            for(let i=2; i<vecs.length; i++) {
+                res.x -= vecs[i].x; res.y -= vecs[i].y; res.z -= vecs[i].z;
+            }
+            if (vecs.length === 2) {
+                latexStr = `\\vec{R} = \\vec{V}_1 - \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+            } else {
+                latexStr = `\\vec{R} = \\vec{V}_1 - \\sum_{i=2}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+            }
+        } else if (type === 'dot') {
+            const dot = (vecs[0].x * vecs[1].x) + (vecs[0].y * vecs[1].y) + (vecs[0].z * vecs[1].z);
+            latexStr = `\\vec{V}_1 \\cdot \\vec{V}_2 = ${dot}`;
+        } else if (type === 'cross') {
+            res.x = vecs[0].y * vecs[1].z - vecs[0].z * vecs[1].y;
+            res.y = vecs[0].z * vecs[1].x - vecs[0].x * vecs[1].z;
+            res.z = vecs[0].x * vecs[1].y - vecs[0].y * vecs[1].x;
+            latexStr = `\\vec{V}_1 \\times \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+        }
+
+        // اضافه کردن جزئیات اندازه و زاویه به لاتکس
+        vecs.forEach((v, i) => {
+            const mag = Math.sqrt(v.x**2 + v.y**2 + v.z**2).toFixed(2);
+            let currentColor
+            if (isDarkMode) {
+                currentColor = 0xffffff;
+            } else {
+                currentColor = 0x000000;
+            }
+            const hexColor = '#' + (i < vectorColors.length ? vectorColors[i] : currentColor).toString(16).padStart(6, '0');
+            latexStr += `\\\\ \\color{${hexColor}}{|\\vec{V}_{${i+1}}|} = ${mag}`;
+            
+            // رسم بردار در Three.js
+            if (mag > 0) {
+                // انتخاب رنگ: اگر از لیست بیشتر شد، رنگ رندوم تولید کن
+                const color = i < vectorColors.length ? vectorColors[i] : Math.random() * 0xffffff;
+                const arrow = new THREE.ArrowHelper(
+                    new THREE.Vector3(v.x, v.y, v.z).normalize(),
+                    new THREE.Vector3(0, 0, 0),
+                    Math.sqrt(v.x**2 + v.y**2 + v.z**2),
+                    color,
+                    0.4, // اندازه نوک پیکان
+                    0.2  // عرض نوک پیکان
+                );
+                arrow.name = `بردار V${i+1} (${v.x}, ${v.y}, ${v.z})`; // اختصاص نام
+                scene.add(arrow);
+                arrows.push(arrow);
+            }
+        });
+
+        // رسم بردار نتیجه
+        if (type !== 'dot') {
+            const resMag = Math.sqrt(res.x**2 + res.y**2 + res.z**2);
+            if (resMag > 0) {
+                const resArrow = new THREE.ArrowHelper(
+                    new THREE.Vector3(res.x, res.y, res.z).normalize(),
+                    new THREE.Vector3(0, 0, 0),
+                    resMag,
+                    0xffd700, // طلایی برای نتیجه
+                    0.4, 0.2 // ابعاد سر بردار
+                );
+                resArrow.name = `نتیجه R (${res.x.toFixed(1)}, ${res.y.toFixed(1)}, ${res.z.toFixed(1)})`; // اختصاص نام
+                scene.add(resArrow);
+                arrows.push(resArrow);
+            }
+            latexStr += `\\\\ \\color{#ffd700}{|\\vec{R}|} = ${resMag.toFixed(2)}`;
+        }
+
+        // نمایش خروجی لاتکس
+        const resultDiv = document.getElementById('vector-latex-result');
+        resultDiv.classList.remove('hidden');
+        if (isTouchDevice()) {
+            katex.render(latexStr, resultDiv, { throwOnError: false, displayMode: false, trust: true });
+        } else {
+            katex.render(latexStr, resultDiv, { throwOnError: false, displayMode: true, trust: true });
+        }
+        if (arrows.length > 0) {
+            const firstVec = vecs[0];
+            camera.lookAt(res.x / 2, res.y / 2, res.z / 2);
+        }
+    }
+
+    // اجرای اولیه
+    setTimeout(() => {
+        initThree();
+    }, 100);
+
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let tooltip = document.getElementById('v-tooltip');
+
+    // گوش دادن به حرکت موس روی کانتینر
+    function handleInteraction(event) {
+        const container = document.getElementById('three-container');
+        const rect = container.getBoundingClientRect();
+        
+        let clientX, clientY;
+        if (event.touches) { // حالت لمسی
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else { // حالت موس
+            clientX = event.clientX;
+            clientY = event.clientY;
+        }
+
+        mouse.x = ((clientX - rect.left) / container.clientWidth) * 2 - 1;
+        mouse.y = -((clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+        if (scene && camera) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(arrows, true);
+
+            if (intersects.length > 0) {
+                let arrow = intersects[0].object;
+                while (arrow.parent && !(arrow instanceof THREE.ArrowHelper)) {
+                    arrow = arrow.parent;
+                }
+
+                if (arrow.name) {
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = arrow.name;
+                    tooltip.style.left = (clientX + 10) + 'px';
+                    tooltip.style.top = (clientY + 10) + 'px';
+                    
+                    // در موبایل بعد از ۳ ثانیه تولتیپ غیب شود
+                    if (event.touches) {
+                        setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
+                    }
+                    return;
+                }
+            }
+        }
+        tooltip.style.display = 'none';
+    }
+
+    // جایگزین کردن رویدادهای قبلی با این دو خط:
+    document.getElementById('three-container').addEventListener('mousemove', handleInteraction);
+    document.getElementById('three-container').addEventListener('touchstart', handleInteraction);
 
     // <!-- Smart MATH Logic -->
 
