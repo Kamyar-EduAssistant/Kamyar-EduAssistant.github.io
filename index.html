@@ -565,7 +565,7 @@
             	background-color: rgb(30 58 138 / 49%) !important; 
             }
             .hover\:bg-blue-200:hover {
-            	background-color: #33465d !important; 
+            	background-color: #3f4852 !important; 
             }
             .bg-gray-50 {
             	background-color: #282b29 !important; 
@@ -4817,6 +4817,12 @@
                 input.addEventListener('input', updatePiecewiseLatex);
             });
             updatePiecewiseLatex();
+            initializeVennDiagram();
+            isDarkMode();
+            initThree();
+            onWindowResize();
+            getPlotDimensions('math-piecewise-target');
+            getPlotDimensions('math-comparison-target');
 	    });
 
 	    function addComparisonFormula() {
@@ -5637,6 +5643,8 @@
 // برای اطمینان از به روز رسانی هنگام تغییر حالت سیستم
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         initializeVennDiagram();
+        isDarkMode();
+        initThree();
     });
 
     function drawVennDiagram() {
