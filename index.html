@@ -29,8 +29,8 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
     <!-- Function Plotter for Graphs -->
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/function-plot/dist/function-plot.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/function-plot@1.24.0/dist/function-plot.js"></script>
 
     <!-- Three.js for 3D Vector Ploting -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
@@ -75,6 +75,77 @@
         .bg-header {
             background-color: #f8fafc52; /* A slightly off-white for better viewing */
         }
+
+        #main-sidebar {
+            width: 18rem !important; /* سایز همیشه ثابت بماند */
+            transform: translateX(100%); /* پیش‌فرض بسته */
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+            z-index: 50;
+            position: fixed;
+            right: 0;
+            top: 0;
+        }
+
+        #main-sidebar.show {
+            transform: translateX(0);
+        }
+
+        /* Layout adjustment for Desktop */
+        @media (min-width: 1024px) {
+            body {
+                transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.sidebar-open {
+                padding-right: 18rem; /* 72 units (w-72) */
+            }
+            /* Center content in remaining space */
+            body.sidebar-open #main-content {
+                max-width: calc(100vw - 18rem);
+                margin-left: 0;
+                margin-right: 0;
+            }
+            #main-sidebar { opacity: 1 !important; }
+        }
+        @media (max-width: 1024px) {
+            #page-header div.flex {
+                padding-right: 55px; /* هدر را کمی به چپ هل می‌دهد تا با دکمه تداخل نکند */
+            }
+        }
+
+        /* Active Menu Style */
+        .menu-item.active {
+            background-color: #15803d !important;
+            color: white !important;
+        }
+        .active-parent { background-color: #15803d20; border-right: 4px solid #15803d; }
+        .submenu-item.active-sub { background-color: #14532d !important; color: white !important; }
+        #hamburger-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .dark #hamburger-btn:hover { background-color: rgba(255,255,255,0.1); }
+
+        /* Transitions */
+        .arrow-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0, 1, 0, 1), opacity 0.2s, ;
+            opacity: 0;
+        }
+        .submenu.open {
+            max-height: 10000px; /* یک عدد بزرگ برای جا شدن محتوا */
+            opacity: 1;
+            transition: max-height 1s ease-in-out;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border-radius: 10px; 
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
 
         .bg-AIInput {
             background-color: #FFFFFF;
@@ -434,6 +505,8 @@
             #splash-screen p {
             	color: #86efac; /* رنگ سبز بسیار روشن یا سفید */
             }
+            .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #222325; border-radius: 10px; }
             .bg-AIInput {
                 background-color: #1E1F20;
                 border: 1px #1E1F20;
@@ -738,10 +811,114 @@
         <p class="text-3xl text-center mt-4 font-bold text-green-800">✨کمک‌یار آموزشی✨</p>
     </div>
 
+    <!-- Menu -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+    <aside id="main-sidebar" class="fixed right-0 top-0 h-full bg-white dark:bg-[#1e1f20] z-50 transition-all duration-300 shadow-xl overflow-hidden flex flex-col w-0 lg:w-72 lg:translate-x-0 translate-x-full border-l border-gray-200 dark:border-gray-800 opacity-0">
+        <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+            <button id="8tn3n0" onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full lg:hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <span></span>
+            <span class="font-bold text-lg text-center">منوی دسترسی</span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+            <div>
+                <button id="home-menu-btn" onclick="navigateTo('home-page','', this)" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="home-page">
+                    <span class="flex-1 text-right font-bold">🏠 صفحه اصلی</span>
+                </button>
+            </div>
+
+            <div class="menu-group">
+                <button onclick="navigateTo('ai-solver-page', '🤖 پاسخ مسئله با هوش مصنوعی', this)" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="ai-solver-page">
+                    <span class="flex-1 text-right font-bold">🤖 پاسخ مسئله با هوش مصنوعی</span>
+                </button>
+            </div>
+            <div class="menu-group">
+                <button onclick="toggleSubmenu('calculater-sub')" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="calculator-page">
+                    <span class="flex-1 text-right font-bold">🧮 ماشین حساب</span>
+                    <svg class="w-4 h-4 transition-transform arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="calculater-sub" class="submenu pr-4 mt-1 mb-1 space-y-1 overflow-hidden transition-all duration-300">
+                    <button onclick="navigateTo('calculator-page', 'ماشین حساب', this)" class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700">ماشین‌حساب ساده</button>
+                    <button onclick="navigateTo('advanced-calculator-page', 'ماشین حساب پیشرفته', this)" class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" id="advanced-calculator-menu">ماشین‌حساب پیشرفته</button>
+                </div>
+            </div>
+            <div class="menu-group">
+                <button onclick="navigateTo('converter-page', '📏 تبدیل واحد', this)" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="converter-page">
+                    <span class="flex-1 text-right font-bold">📏 تبدیل واحد</span>
+                </button>
+            </div>
+            <div class="menu-group">
+                <button onclick="toggleSubmenu('math-sub')" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="math-page">
+                    <span class="flex-1 text-right font-bold">📐 ریاضیات</span>
+                    <svg class="w-4 h-4 transition-transform arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="math-sub" class="submenu pr-4 mt-1 mb-1 space-y-1 overflow-hidden transition-all duration-300">
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-explainer', 'توضیح مفاهیم و نظریات ریاضی', this)">توضیح مفاهیم و نظریات ریاضی</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-solver', 'حل گام به گام مسائل ریاضی', this)">حل گام به گام مسائل ریاضی</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('prime-checker', 'آیا عدد اول است؟', this)">عدد اول است یا نه؟</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('pythagorean-theorem', 'قضیه فیثاغورس', this)">قضیه فیثاغورس</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-perimeter', 'محیط اشکال', this)">محیط اشکال</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-area', 'مساحت اشکال', this)">مساحت اشکال</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-volume', 'حجم اشکال', this)">حجم اشکال</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-plot', 'رسم نمودار تابع', this)">رسم نمودار تابع</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-venn', 'رسم نمودار ون', this)">رسم نمودار ون</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-divisibility', 'بخش پذیری دو عدد', this)">بخش پذیری دو عدد</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-divisors', 'شمارنده ها', this)">شمارنده ها</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-sequences', 'دنباله‌ها', this)">دنباله‌ها</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-gcd-lcm', 'ب.م.م و ک.م.م', this)">ب.م.م و ک.م.م</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('vector-calculator', 'محاسبات بردارها', this)">محاسبات بردارها</button>
+                </div>
+            </div>
+            <div class="menu-group">
+                <button onclick="toggleSubmenu('physics-sub')" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="physics-page">
+                    <span class="flex-1 text-right font-bold">⚛️ فیزیک</span>
+                    <svg class="w-4 h-4 transition-transform arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="physics-sub" class="submenu pr-4 mt-1 mb-1 space-y-1 overflow-hidden transition-all duration-300">
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsTool('', '')">توضیح مفاهیم و پدیده‌های فیزیکی</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsTool('', '')">حل مسائل فیزیک</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('mechanics')">مکانیک</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('oscillations-waves')">نوسان و موج</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('statistical-physics')">فیزیک آماری</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('thermodynamics')">ترمودینامیک</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('electromagnetism')">الکترومغناطیس</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('optics')">اپتیک (نورشناسی)</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('relativity')">نسبیت</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('nuclear-physics')">فیزیک هسته‌ای</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('quantum-physics')">فیزیک کوانتوم</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('particle-physics')">فیزیک ذرات</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('astrophysics')">اخترفیزیک</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('fluid-mechanics')">مکانیک سیالات</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showPhysicsBranch('black-holes')">سیاهچاله‌ها</button>
+                </div>
+            </div>
+            
+            </nav>
+
+        <div class="relative p-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#30343b]">
+            <div class="absolute bottom-full left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-[#30343b] to-transparent pointer-events-none"></div>
+            <button class="w-full flex items-center p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <span class="flex-1 text-right font-bold">تنظیمات</span>
+            </button>
+            <button class="w-full flex items-center p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <span class="flex-1 text-right font-bold">درباره ما</span>
+            </button>
+        </div>
+    </aside>
+
+    <button id="hamburger-btn" onclick="toggleSidebar()" class="fixed top-3 right-3 z-[60] p-2 bg-white/90 dark:bg-[#1e1f20]/90 backdrop-blur-md rounded-full shadow-sm border border-gray-200 dark:border-gray-700 hidden opacity-0 transition-all duration-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
     <!-- Header -->
     <header id="page-header" class="sticky top-0 backdrop-blur-sm py-3 z-10 hidden">
         <div class="flex items-center justify-between sm:px-6 lg:px-8 py-3 max-w-7xl mx-auto px-4">
-            <h1 id="page-title" class="text-3xl font-bold text-slate-900"></h1>
+            <h1 id="page-title" class="text-3xl font-bold text-slate-900 justify-center max-content"></h1>
             <div class="flex items-center gap-2">
                     <button onclick="navigateTo('home-page')" class="btn-3d btn-gray p-2 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -761,32 +938,31 @@
              <h1 class="text-3xl font-bold text-center mb-8 text-slate-900">🏠 صفحه اصلی</h1>
              <div class="grid grid-cols-6 md:grid-cols-6 gap-4 text-lg">
                 <!-- Row 1 -->
-                <button onclick="navigateTo('ai-solver-page', '🤖 پاسخ مسئله با هوش مصنوعی')" class="w-full text-center p-6 btn-3d btn-green col-span-6 md:col-span-6">🤖 پاسخ مسئله با هوش مصنوعی</button>
+                <button onclick="navigateTo('ai-solver-page', '🤖 پاسخ مسئله با هوش مصنوعی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-6 md:col-span-6">🤖 پاسخ مسئله با هوش مصنوعی</button>
                 
                 <!-- Row 2 -->
-                <button onclick="navigateTo('calculator-page', 'ماشین حساب')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧮 ماشین حساب</button>
-                <button onclick="navigateTo('converter-page', '📏 تبدیل واحد')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">📏 تبدیل واحد</button>
-
+                <button onclick="navigateTo('calculator-page', 'ماشین حساب', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧮 ماشین حساب</button>
+                <button onclick="navigateTo('converter-page', '📏 تبدیل واحد', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">📏 تبدیل واحد</button>
                 <!-- Row 3 -->
-                <button onclick="navigateTo('math-page', 'ریاضیات')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">📐 ریاضیات</button>
-                <button onclick="navigateTo('physics-page', 'فیزیک')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">⚛️ فیزیک</button>
+                <button onclick="navigateTo('math-page', 'ریاضیات', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">📐 ریاضیات</button>
+                <button onclick="navigateTo('physics-page', 'فیزیک', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">⚛️ فیزیک</button>
 
                 <!-- Row 4 -->
-                <button onclick="navigateTo('chemistry-page', 'شیمی')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧪 شیمی</button>
-                <button onclick="navigateTo('biology-page', 'زیست‌شناسی')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧬 زیست</button>
+                <button onclick="navigateTo('chemistry-page', 'شیمی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧪 شیمی</button>
+                <button onclick="navigateTo('biology-page', 'زیست‌شناسی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🧬 زیست</button>
 
                 <!-- Row 5 -->
-                <button onclick="navigateTo('geology-page', 'زمین‌شناسی')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🌍 زمین‌شناسی</button>
-                <button onclick="navigateTo('astronomy-page', 'نجوم')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🔭 نجوم</button>
+                <button onclick="navigateTo('geology-page', 'زمین‌شناسی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🌍 زمین‌شناسی</button>
+                <button onclick="navigateTo('astronomy-page', 'نجوم', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🔭 نجوم</button>
 
                 <!-- Row 6 -->
-                <button onclick="navigateTo('persian-page', 'ادبیات فارسی')" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">📜 ادبیات فارسی ✍️</button>
-                <button onclick="navigateTo('english-page', 'انگلیسی')" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">🇬🇧 زبان انگلیسی ✍️</button>
-                <button onclick="navigateTo('arabic-page', 'عربی')" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">🇸🇦 زبان عربی ✍️</button>
+                <button onclick="navigateTo('persian-page', 'ادبیات فارسی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">📜 ادبیات فارسی ✍️</button>
+                <button onclick="navigateTo('english-page', 'انگلیسی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">🇬🇧 زبان انگلیسی ✍️</button>
+                <button onclick="navigateTo('arabic-page', 'عربی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-2 md:col-span-2">🇸🇦 زبان عربی ✍️</button>
                  
                 <!-- Row 7 -->
-                <button onclick="navigateTo('simulations-page', 'آزمایشات')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🔬 آزمایشات</button>
-                <button onclick="navigateTo('games-page', 'بازی‌ها')" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🎮 بازی‌ها</button>
+                <button onclick="navigateTo('simulations-page', 'آزمایشات', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🔬 آزمایشات</button>
+                <button onclick="navigateTo('games-page', 'بازی‌ها', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🎮 بازی‌ها</button>
              </div>
              <footer class="text-center mt-7 text-gray-500">
                 <p>سازنده: کامیار گرگانلی دوجی</p>
@@ -847,7 +1023,7 @@
         <div id="calculator-page" class="page">
             <div id="calculator-container" class="max-w-sm mx-auto calculator-bg p-4 rounded-xl shadow-lg">
             	<div class="text-center mb-3">
-                 	<button id="calc-mode-toggle" class="px-20 py-2 btn-3d btn-gray" onclick="navigateTo('advanced-calculator-page', 'ماشین حساب پیشرفته')">ماشین حساب پیشرفته</button>
+                 	<button id="calc-mode-toggle" class="px-20 py-2 btn-3d btn-gray" onclick="navigateTo('advanced-calculator-page', 'ماشین حساب پیشرفته', this)">ماشین حساب پیشرفته</button>
             	</div>
                 <!-- Display -->
                 <div class="calculator-display mb-4">
@@ -1797,7 +1973,7 @@
                         <div id="math-simple-latex" class="text-center my-4 p-3 border rounded-lg bg-gray-100 min-h-[50px] shadow-inner flex items-center justify-center relative">
                             <span class="text-gray-500">پیش‌نمایش فرمول تابع</span>
                         </div>
-                        <div id="math-plot-target" class="mt-2 item-center w-full plot-height popIn"></div>
+                        <div id="math-plot-target" class="mt-2 item-center w-full plot-height popIn rounded-lg"></div>
                     </div>
 
                     <div id="plot-piecewise" class="plot-tab-content mt-4 space-y-2 hidden">
@@ -2086,8 +2262,8 @@
             <div id="math-split-border" class="mt-5 border-t"></div>
             <h2 class="math-heading mt-5 text-2xl text-center font-bold">✨ابزارهای هوشمند ریاضی🛠️</h2>
             <div id="math-smartTool-buttons" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-explainer', 'توضیح مفاهیم و نظریات ریاضی')">توضیح مفاهیم و نظریات ریاضی</button>
-                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-solver', 'حل گام به گام مسائل ریاضی')">حل گام به گام مسائل ریاضی</button>
+                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-explainer', 'توضیح مفاهیم ریاضی')">توضیح مفاهیم و نظریات ریاضی</button>
+                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-solver', 'حل المسائل ریاضی')">حل گام به گام مسائل ریاضی</button>
             </div>
 
             <div id="math-smartTool-container">
@@ -2533,7 +2709,7 @@
         const pageHeader = document.getElementById('page-header');
         const pageTitle = document.getElementById('page-title');
 
-        function navigateTo(pageId, title = '') {
+        function navigateTo(pageId, title = '', element = null) {
             const body = document.body;
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             const newPage = document.getElementById(pageId);
@@ -2544,10 +2720,12 @@
                 document.getElementById('home-page').classList.add('active'); // Fallback to home
             }
 
+            document.getElementById('math-solver').classList.add('hidden');
             if (pageId === 'home-page') {
                 pageHeader.classList.add('hidden');
                 body.classList.remove('bg-astronomy-day-night');
                 body.style.backgroundImage = ''; // حذف استایل مستقیم
+                document.getElementById('home-menu-btn').classList.add('active');
                 document.getElementById('math-solver').classList.add('hidden');
             } else {
                 pageHeader.classList.remove('hidden');
@@ -2594,6 +2772,27 @@
                 pushNewState();
             }
             window.scrollTo(0, 0);
+
+            // Remove active classes
+            document.querySelectorAll('.menu-item, .active-sub').forEach(el => {
+                el.classList.remove('active', 'active-parent', 'active-sub');
+            });
+
+            // Add active class to current
+            if (element.parentElement.classList.contains('menu-group')) {
+                element.classList.add('active-parent');
+            } else if (element.closest('[id$="-sub"]')) {
+                element.classList.add('active-sub');
+                element.closest('.menu-group').querySelector('.menu-item').classList.add('active-parent');
+            } else {
+                element.classList.add('active');
+            }
+
+            // Close on mobile after selection
+            if (window.innerWidth < 1024) {
+                const overlay = document.getElementById('sidebar-overlay');
+                if (!overlay.classList.contains('hidden')) toggleSidebar();
+            }
         }
 
         function goBack() {
@@ -2698,6 +2897,7 @@
                 setTimeout(() => {
                     splashScreen.style.display = 'none';
                     mainContainer.style.opacity = '1';
+                    initMenuUI();
                     
                     // Render KaTeX for any static math formulas on the page
                     if(window.renderMathInElement) {
@@ -2740,7 +2940,10 @@
 
         // ۲. گوش دادن به رویداد بازگشت (هم دکمه فیزیکی گوشی، هم دکمه Back مرورگر)
         window.addEventListener('popstate', (event) => {
-            // اگر تابعی برای بازگشت داری، اینجا صدا بزن
+            if (document.getElementById('main-sidebar').classList.contains('show')) {
+                toggleSidebar();
+                return;
+            }
             goBack();
         });
 
@@ -2753,6 +2956,9 @@
             originalGoBack();
         };
 
+        function isDarkmode() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
 
         // --- Event Listener for AI Input Enter Key ---
 	function isTouchDevice() {
@@ -4818,7 +5024,7 @@
             });
             updatePiecewiseLatex();
             initializeVennDiagram();
-            isDarkMode();
+            isDarkmode();
             initThree();
             onWindowResize();
             getPlotDimensions('math-piecewise-target');
@@ -5643,7 +5849,7 @@
 // برای اطمینان از به روز رسانی هنگام تغییر حالت سیستم
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         initializeVennDiagram();
-        isDarkMode();
+        isDarkmode();
         initThree();
     });
 
@@ -7252,6 +7458,281 @@
                 button.onclick = () => loadGame(game.url);
                 buttonsContainer.appendChild(button);
             });
+        }
+
+        // Toggle Sidebar Function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const btn = document.getElementById('hamburger-btn');
+            const body = document.body;
+            const isMobile = window.innerWidth < 1024;
+
+            if (!sidebar.classList.contains('show')) {
+                // Open
+                sidebar.classList.add('show');
+                if (isMobile) {
+                    sidebar.classList.remove('translate-x-full');
+                    sidebar.classList.add('translate-x-0');
+                    sidebar.style.width = '18rem';
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                    btn.classList.add('hidden');
+                    setTimeout(() => {
+                        btn.classList.replace('opacity-100', 'opacity-0');
+                    }, 500);
+                    document.getElementById('8tn3n0').classList.remove('hidden');
+                } else {
+                    sidebar.style.width = '18rem';
+                    body.classList.add('sidebar-open');
+                    document.getElementById('8tn3n0').classList.add('hidden');
+                }
+            } else {
+                // Close
+                sidebar.classList.remove('show');
+                if (isMobile) {
+                    sidebar.classList.add('translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    overlay.classList.remove('opacity-100');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    btn.classList.remove('hidden');
+                    setTimeout(() => {
+                        btn.classList.replace('opacity-0', 'opacity-100');
+                    }, 100);
+                    document.getElementById('8tn3n0').classList.remove('hidden');
+                } else {
+                    sidebar.style.width = '0px';
+                    body.classList.remove('sidebar-open');
+                    document.getElementById('8tn3n0').classList.add('hidden');
+                }
+            }
+        }
+
+        function updateMenuHighlight(pageId, toolId = null) {
+            // پاک کردن تمام هایلایت‌های قبلی
+            document.querySelectorAll('.menu-item, .submenu-item').forEach(el => {
+                el.classList.remove('active', 'active-sub', 'active-parent');
+            });
+
+            // ۱. اگر ابزار خاصی (مثل ماشین حساب پیشرفته) باز شده
+            const targetId = toolId || pageId;
+            const activeBtn = document.querySelector(`[onclick*="'${targetId}'"]`);
+
+            if (activeBtn) {
+                if (activeBtn.classList.contains('submenu-item')) {
+                    activeBtn.classList.add('active-sub');
+                    // باز کردن ساب‌منو به صورت خودکار و هایلایت کردن والد
+                    const parentSub = activeBtn.closest('.submenu');
+                    if (parentSub) {
+                        parentSub.classList.add('open');
+                        parentSub.previousElementSibling.querySelector('.arrow-icon').classList.add('rotated');
+                        parentSub.previousElementSibling.classList.add('active-parent');
+                    }
+                } else {
+                    activeBtn.classList.add('active');
+                }
+            }
+        }
+        const originalNavigateTo = navigateTo;
+        navigateTo = function(pageId, title = '', element = null) {
+            // اجرای منطق اصلی تغییر صفحه
+            originalNavigateTo(pageId, title, element);
+            // بروزرسانی هایلایت منو بر اساس صفحه جدید
+            updateMenuHighlight(pageId);
+        }
+        const originalShowMathTool = showMathTool;
+        showMathTool = function(toolId, title, element = null) {
+            // اگر کاربر مستقیماً روی ابزار کلیک کرد، اول مطمئن میشویم که در صفحه ریاضیات هستیم
+            const mathPage = document.getElementById('math-page');
+            if (!mathPage.classList.contains('active')) {
+                const observer = new MutationObserver((mutationsList, observer) => {
+                    for (const mutation of mutationsList) {
+                        if (mutation.type === 'attributes' && mathPage.classList.contains('active')) {
+                            originalShowMathTool(toolId, title);
+                            updateMenuHighlight('math-page', toolId); // اجرای تابع بعد از فعال شدن صفحه
+                            observer.disconnect(); // توقف نظارت
+                            break;
+                        }
+                    }
+                });
+                observer.observe(mathPage, { attributes: true }); // نظارت بر تغییرات attribute
+                navigateTo('math-page', 'ریاضیات');
+            } else {
+                originalShowMathTool(toolId, title);
+                updateMenuHighlight('math-page', toolId); // اگر صفحه فعال است، فقط تابع را اجرا کن
+            }
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('main-sidebar');
+                if (sidebar.classList.contains('show')) toggleSidebar();
+            }
+        }
+        const originalShowPhysicsTool = showPhysicsTool;
+        showPhysicsTool = function(toolId, title, element = null) {
+            const physicsPage = document.getElementById('physics-page');
+            if (!physicsPage.classList.contains('active')) {
+                const observer = new MutationObserver((mutationsList, observer) => {
+                    for (const mutation of mutationsList) {
+                        if (mutation.type === 'attributes' && physicsPage.classList.contains('active')) {
+                            originalShowPhysicsTool(toolId, title);
+                            updateMenuHighlight('physics-page', toolId); // اجرای تابع بعد از فعال شدن صفحه
+                            observer.disconnect(); // توقف نظارت
+                            break;
+                        }
+                    }
+                });
+                observer.observe(physicsPage, { attributes: true }); // نظارت بر تغییرات attribute
+                navigateTo('physics-page', '⚛️ فیزیک');
+            } else {
+                originalShowPhysicsTool(toolId, title);
+                updateMenuHighlight('physics-page', toolId); // اگر صفحه فعال است، فقط تابع را اجرا کن
+            }
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('main-sidebar');
+                if (sidebar.classList.contains('show')) toggleSidebar();
+            }
+        }
+        const originalShowPhysicsBranch = showPhysicsBranch;
+        showPhysicsBranch = function(branchId, element = null) {
+            document.getElementById('math-solver').classList.add('hidden');
+            const physicsPage = document.getElementById('physics-page');
+            if (!physicsPage.classList.contains('active')) {
+                document.getElementById('page-header').classList.remove('hidden');
+                const body = document.body;
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                const newPage = document.getElementById('physics-page');
+                if(newPage) {
+                    newPage.classList.add('active');
+                }
+                document.getElementById('physics-tool-buttons').classList.remove('hidden');
+                document.querySelectorAll('.physics-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                });
+                document.querySelectorAll('.physics-branch-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                });
+                document.querySelectorAll('.physics-subbranch-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                });
+                const pageTitle = document.getElementById('page-title');
+                pageTitle.textContent = '🧮محاسبۀ کمیت‌های فیزیکی';
+                document.getElementById('physics-tool-buttons').classList.add('hidden'); // Hide button grid
+                document.querySelectorAll('.physics-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                    tool.classList.remove('fadeIn-active');
+                });
+                document.getElementById('physical-branch-selection').classList.remove('hidden');
+                document.getElementById('physical-branch-selection-label').classList.remove('hidden');
+                const tool = document.getElementById('CPhysQuantity');
+                if(tool) {
+                    tool.classList.remove('hidden');
+                    tool.classList.add('fadeIn-active');
+                    if (window.renderMathInElement) {
+                        renderMathInElement(tool);
+                    }
+                }
+                document.getElementById('physical-branch-selection').classList.add('hidden');
+                document.getElementById('physical-branch-selection-label').classList.add('hidden');
+                document.querySelectorAll('.physics-branch-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                    tool.classList.remove('fadeIn-active');
+                });
+                document.querySelectorAll('.physical-subbranch-selection-label').forEach(tool => {
+                    tool.classList.remove('hidden');
+                });
+                document.querySelectorAll('.physical-subbranch-selection').forEach(tool => {
+                    tool.classList.remove('hidden');
+                });
+                const branchTool = document.getElementById(branchId);
+                if (branchTool) {
+                    branchTool.classList.remove('hidden');
+                    branchTool.classList.add('fadeIn-active');
+                    if (window.renderMathInElement) {
+                        renderMathInElement(branchTool);
+                    }
+                }
+                pushNewState();
+            } else {
+                const pageTitle = document.getElementById('page-title');
+                pageTitle.textContent = '🧮محاسبۀ کمیت‌های فیزیکی';
+                document.getElementById('physics-tool-buttons').classList.add('hidden'); // Hide button grid
+                document.querySelectorAll('.physics-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                    tool.classList.remove('fadeIn-active');
+                });
+                document.getElementById('physical-branch-selection').classList.remove('hidden');
+                document.getElementById('physical-branch-selection-label').classList.remove('hidden');
+                const tool = document.getElementById('CPhysQuantity');
+                if(tool) {
+                    tool.classList.remove('hidden');
+                    tool.classList.add('fadeIn-active');
+                    if (window.renderMathInElement) {
+                        renderMathInElement(tool);
+                    }
+                }
+                document.getElementById('physical-branch-selection').classList.add('hidden');
+                document.getElementById('physical-branch-selection-label').classList.add('hidden');
+                document.querySelectorAll('.physics-branch-tool').forEach(tool => {
+                    tool.classList.add('hidden');
+                    tool.classList.remove('fadeIn-active');
+                });
+                document.querySelectorAll('.physical-subbranch-selection-label').forEach(tool => {
+                    tool.classList.remove('hidden');
+                });
+                document.querySelectorAll('.physical-subbranch-selection').forEach(tool => {
+                    tool.classList.remove('hidden');
+                });
+                const branchTool = document.getElementById(branchId);
+                if (branchTool) {
+                    branchTool.classList.remove('hidden');
+                    branchTool.classList.add('fadeIn-active');
+                    if (window.renderMathInElement) {
+                        renderMathInElement(branchTool);
+                    }
+                }
+                pushNewState();
+            }
+            originalShowPhysicsBranch(branchId);
+            updateMenuHighlight('physics-page', branchId);
+            
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('main-sidebar');
+                if (sidebar.classList.contains('show')) toggleSidebar();
+            }
+        }
+
+        // Submenu Toggle
+        function toggleSubmenu(id) {
+            const sub = document.getElementById(id);
+            const arrow = sub.previousElementSibling.querySelector('.arrow-icon');
+            
+            if (sub.classList.contains('open')) {
+                sub.classList.remove('open');
+                arrow.classList.remove('rotated');
+            } else {
+                sub.classList.add('open');
+                arrow.classList.add('rotated');
+            }
+        }
+
+        // Initialize Hamburger visibility after Splash
+        function initMenuUI() {
+            const hamburger = document.getElementById('hamburger-btn');
+            hamburger.classList.remove('hidden');
+            setTimeout(() => {
+                hamburger.classList.replace('opacity-0', 'opacity-100');
+            }, 500);
+
+            setTimeout(() => {
+                document.getElementById('main-sidebar').classList.remove('hidden');
+                document.getElementById('main-sidebar').classList.replace('opacity-0', 'opacity-100');
+            }, 100);
+            
+            // Auto-open on Desktop
+            if (window.innerWidth >= 1024) {
+                const sidebar = document.getElementById('main-sidebar');
+                sidebar.classList.add('show');
+                document.body.classList.add('sidebar-open');
+            }
         }
 
     </script>
