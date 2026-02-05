@@ -27,6 +27,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
 
     <!-- Function Plotter for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -50,30 +51,52 @@
     // متصل کردن به پنجره برای استفاده در توابع قدیمی شما
     window.THREE = THREE;
     window.OrbitControls = OrbitControls;
-    
-    // اگر تابعی دارید که باید بلافاصله اجرا شود اینجا صدا بزنید
-    console.log("Libraries Loaded Successfully");
     </script>
 
     <!-- Prism.js for Highlight Code Blocks -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckDpbCjaWr2Ugeh4/EGactnsCJO8e2i7gqY+2eJV6gwUqML" crossorigin="anonymous">
 
     <style>
-        html {
-            scrollbar-width: thin; /* باریک کردن اسکرول‌بار */
+        :root {
+            --primary-color: #15803d; 
+            --secondary-color: #1e293b;
+            --third-color: #6b7280;
+            --quotient-color: #109742;
+            --remainder-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
         }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #4ade80;
+                --secondary-color: #ffffff;
+                --third-color: #94a3b8;
+                --quotient-color: #10b981;
+                --remainder-color: #f59e0b;
+                --bg-color: #131314;
+                --card-bg: #30343b;
+            }
+        }
+        html { scrollbar-width: thin; }
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: #f8fafc; /* A slightly off-white for better viewing */
+            background-color: #f8fafc;
             margin: 0;
             padding: 0;
         }
 
-        .bg-header {
-            background-color: #f8fafc52; /* A slightly off-white for better viewing */
+        .bg-header { background-color: #f8fafc52; }
+        #page-title{
+            display: -webkit-box;
+            display: box;
+            -webkit-box-orient: vertical;
+            box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         #main-sidebar {
@@ -92,21 +115,21 @@
 
         /* Layout adjustment for Desktop */
         @media (min-width: 1024px) {
-            body {
+            body, #page-header {
                 transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             body.sidebar-open {
                 padding-right: 18rem; /* 72 units (w-72) */
             }
             /* Center content in remaining space */
-            body.sidebar-open #main-content {
+            body.sidebar-open #main-content #page-header {
                 max-width: calc(100vw - 18rem);
                 margin-left: 0;
                 margin-right: 0;
             }
             #main-sidebar { opacity: 1 !important; }
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 82rem) {
             #page-header div.flex {
                 padding-right: 55px; /* هدر را کمی به چپ هل می‌دهد تا با دکمه تداخل نکند */
             }
@@ -159,23 +182,68 @@
             box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
         }
 
+        /* ul و ol اصلی */
+        ul, ol {
+            margin: 0.5em 0;
+        }
+
+
+        /* بولت‌ها و شماره‌ها */
+        ul li::marker, ol li::marker {
+            color: #15803d; /* سبز تیره */
+            font-weight: bold;
+        }
+
+        /* فاصله و padding بین آیتم‌ها */
+        ul li, ol li {
+            margin-bottom: 0.3em;
+            padding-right: 1rem;
+        }
+
+        /* لیست‌های تو در تو */
+        ul li ul, ol li ol {
+            margin-top: 0.3em;
+            margin-bottom: 0.3em;
+        }
+
         /* General button style */
         .btn-3d {
+            position: relative;
+            overflow: hidden;
             border-radius: 12px;
             border: 1px solid rgba(0, 0, 0, 0.1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 -3px 0 0 rgba(0, 0, 0, 0.2);
             transition: all 0.15s ease-in-out;
             transform: translateY(0);
+            cursor: pointer;
+            z-index: 0;
         }
-
         .btn-3d:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.07), inset 0 -3px 0 0 rgba(0, 0, 0, 0.2);
         }
-        
-        .btn-3d:active, .btn-3d.active {
+        .btn-3d:active {
             transform: translateY(1px);
             box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.1), inset 0 -2px 0 0 rgba(0, 0, 0, 0.2);
+        }
+        .btn-3d .btn-text { position: relative; z-index: 2; }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.25);
+            transform: scale(0);
+            animation: grow 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .ripple.fade {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        @keyframes grow {
+            to {
+                transform: scale(3);
+            }
         }
 
         /* Specific colors */
@@ -194,7 +262,7 @@
             background-color: #e2e8f0;
         }
         button.btn-3d.rounded-full {
-            border-radius: 999999999999px;
+            border-radius: 50%;
         }
 
         .btn-red {
@@ -253,16 +321,35 @@
             from { transform: scale(0.3); opacity: 0; transform: translateY(-20px); }
             to { transform: scale(1); opacity: 1; transform: translateY(0); }
         }
-
         @keyframes wipeLeft {
             from { transform: scale(0.3); opacity: 0; transform: translateX(-20px); }
             to { transform: scale(1); opacity: 1; transform: translateX(0); }
         }
-
+        @keyframes successPop {
+            0%   { transform: scale(0.95); opacity: 0; }
+            60%  { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .fade-up {
+            animation: fadeUp 0.5s ease-out both;
+        }
+        .fade-out {
+            animation: fadeOut 0.3s ease-in both;
+        }
+        .animate-success {
+            animation: successPop 0.6s ease-out;
+        }
     	.fadeIn-active {
             animation: fadeIn 0.5s ease-out forwards;
 	    }
-
         .wipeLeft {
             animation: wipeLeft 0.5s ease-out forwards;
         }
@@ -323,13 +410,13 @@
         /* Custom Message Box (Modal) */
         .message-box-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); display: flex;
+            background-color: rgba(0, 0, 0, 0.15); display: flex;
             justify-content: center; align-items: center; z-index: 100;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out;
         }
         .message-box-overlay.visible { opacity: 1; pointer-events: auto; }
         .message-box {
-            background-color: white; padding: 2rem; border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); padding: 2rem; border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); text-align: center;
             max-width: 100%; width: 600px; transform: scale(0.9);
             transition: transform 0.3s ease-in-out;
@@ -348,6 +435,15 @@
             background-color: #e7f5e7;
             border-radius: 5px;
             font-family: "Google Sans Code", monospace;
+        }
+
+        /* فقط inline code (نه داخل pre) */
+        :not(pre) > code {
+            white-space: normal;        /* اجازه شکستن خط */
+            word-break: break-word;      /* شکستن رشته‌های خیلی بلند */
+            overflow-wrap: break-word;    /* fallback مرورگر */
+            direction: ltr;
+            unicode-bidi: isolate;
         }
 
         /* برای block code اگر لازم شد */
@@ -374,6 +470,22 @@
             background-origin: content-box;
             background-attachment: local;
         }
+
+        .inline-code {
+            cursor: pointer;
+            transition: background-color 0.25s ease, transform 0.15s ease;
+        }
+        .inline-code.copied {
+            background-color: rgb(152 233 180); /* سبز ملایم */
+            animation: copied 0.6s ease-in-out;
+            transform: scale(1.05);
+        }
+        @keyframes copied {
+            0% { box-shadow: 0 0px 5px rgb(152 233 180 / 0%); }
+            50% { box-shadow: 0 0px 15px rgba(88, 218, 133, 0.65); }
+            100% { box-shadow: 0 0px 0px rgb(152 233 180 / 0%); }
+        }
+
 
         /* Advanced Calculator Styles */
         .palette-tabs button { transition: all 0.2s ease-in-out; border-bottom: 3px solid transparent; }
@@ -410,6 +522,13 @@
             color: #ef4444; /* red */
         }
 
+        #math-simple-latex .katex-display, #math-piecewise-latex .katex-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+        }
+
         /* Table Styles */
         .ai-table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; }
         .ai-table th, .ai-table td { border: 1px solid #d1d5db; padding: 0.75rem; text-align: right; }
@@ -431,6 +550,113 @@
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
         }
 
+        #hammer-div-result {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            direction: ltr; /* Math is LTR */
+            font-size: 1.5rem;
+            font-family: 'Vazirmatn', sans-serif; /* Back to Vazir, we handle spacing manually */
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+        }
+        #hammer-div-result.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .division-wrapper {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Ensure left alignment for LTR numbers */
+            padding-right: 15px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .divisor-box {
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            min-height: 1.5em;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .quotient-box {
+            color: var(--quotient-color);
+            font-weight: 900;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .calc-row {
+            display: flex; /* Use flex for precise digit alignment */
+            line-height: 1.5;
+            position: relative;
+        }
+
+        /* Fixed width digits for perfect alignment */
+        .d {
+            display: inline-block;
+            width: 16px; /* Fixed width for every digit */
+            text-align: center;
+        }
+        
+        .spacer {
+            display: inline-block;
+            width: 16px;
+        }
+
+        /* Subtraction line (the bar) */
+        .sub-line {
+            height: 2px;
+            background-color: #9ca3af;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            width: 100%; 
+        }
+
+        /* Minus sign as absolute to not mess up flow */
+        .subtraction-row::before {
+            content: '-';
+            position: absolute;
+            left: -15px; /* Hangs to the left */
+            color: #6b7280;
+            font-size: 0.8em;
+            top: 2px;
+        }
+
+        .remainder-final {
+            color: var(--remainder-color);
+            font-weight: 900;
+            margin-top: 5px;
+            border-top: 3px solid var(--primary-color);
+            padding-top: 2px;
+            width: 100%;
+            display: flex;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            margin-top: 16px;
+            font-size: 1.2rem;
+            text-align: center;
+            display: none;
+        }
+        .plot-box {
+            animation: successPop 0.6s ease-out;
+        }
         .plot-height {
             height: 700px;
         }
@@ -515,6 +741,12 @@
                 background: none;
                 box-shadow: none;
             }
+            ul li::marker, ol li::marker {
+                color: #4ade80; /* سبز روشن */
+            }
+            li {
+                color: #ffffff;
+            }
             .btn-gray {
             	background-color: #475569; /* خاکستری تیره */
             	color: #f1f5f9; /* متن روشن */
@@ -577,6 +809,9 @@
             .text-red-700 {
             	color: #ff4c4c !important; 
             }
+            .text-yellow-800 {
+                color: #ffe19b;
+            }
             .text-orange-700 {
             	color: #ffae00 !important; 
             }
@@ -625,6 +860,10 @@
             .bg-blue-100 {
                 background-color: #1f2125 !important;
             }
+            .bg-yellow-50 {
+                background-color: #535241;
+                border-color: rgb(156 136 30);
+            }
             .hover\:bg-indigo-100:hover {
             	background-color: #312e81c2 !important; 
             }
@@ -652,7 +891,7 @@
             	background-color: #30343b !important; 
             }
             .message-box {
-            	background-color: #161e21;
+            	background-color: rgb(28 34 35 / 80%);
             	color: #f8fafc;
             }
             .ai-table th, .ai-table td { 
@@ -702,6 +941,14 @@
             }
             pre[class*=language-]:after, pre[class*=language-]:before {
                 box-shadow: 0 13px 8px #161616;
+            }
+            .inline-code.copied {
+                background-color: rgb(51 78 61);
+            }
+            @keyframes copied {
+                0% { box-shadow: 0 0px 5px rgb(51 78 61 / 0%); }
+                50% { box-shadow: 0 0px 15px rgba(47, 124, 74, 0.65); }
+                100% { box-shadow: 0 0px 0px rgb(51 78 61 / 0%); }
             }
         }
 
@@ -858,14 +1105,13 @@
                 <div id="math-sub" class="submenu pr-4 mt-1 mb-1 space-y-1 overflow-hidden transition-all duration-300">
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-explainer', 'توضیح مفاهیم و نظریات ریاضی', this)">توضیح مفاهیم و نظریات ریاضی</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-solver', 'حل گام به گام مسائل ریاضی', this)">حل گام به گام مسائل ریاضی</button>
-                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('prime-checker', 'آیا عدد اول است؟', this)">عدد اول است یا نه؟</button>
+                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('hammer-div', '🔨تقسیم چکشی', this)">تقسیم چکشی</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('pythagorean-theorem', 'قضیه فیثاغورس', this)">قضیه فیثاغورس</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-perimeter', 'محیط اشکال', this)">محیط اشکال</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-area', 'مساحت اشکال', this)">مساحت اشکال</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('shape-volume', 'حجم اشکال', this)">حجم اشکال</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-plot', 'رسم نمودار تابع', this)">رسم نمودار تابع</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-venn', 'رسم نمودار ون', this)">رسم نمودار ون</button>
-                    <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-divisibility', 'بخش پذیری دو عدد', this)">بخش پذیری دو عدد</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-divisors', 'شمارنده ها', this)">شمارنده ها</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-sequences', 'دنباله‌ها', this)">دنباله‌ها</button>
                     <button class="submenu-item w-full text-right p-2 text-sm rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700" onclick="showMathTool('math-tool-gcd-lcm', 'ب.م.م و ک.م.م', this)">ب.م.م و ک.م.م</button>
@@ -901,10 +1147,10 @@
         <div class="relative p-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#30343b]">
             <div class="absolute bottom-full left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-[#30343b] to-transparent pointer-events-none"></div>
             <button class="w-full flex items-center p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <span class="flex-1 text-right font-bold">تنظیمات</span>
+                <span class="flex-1 text-right font-bold">⚙️ تنظیمات</span>
             </button>
             <button class="w-full flex items-center p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <span class="flex-1 text-right font-bold">درباره ما</span>
+                <span class="flex-1 text-right font-bold">ورود به سیستم</span>
             </button>
         </div>
     </aside>
@@ -918,8 +1164,8 @@
     <!-- Header -->
     <header id="page-header" class="sticky top-0 backdrop-blur-sm py-3 z-10 hidden">
         <div class="flex items-center justify-between sm:px-6 lg:px-8 py-3 max-w-7xl mx-auto px-4">
-            <h1 id="page-title" class="text-3xl font-bold text-slate-900 justify-center max-content"></h1>
-            <div class="flex items-center gap-2">
+            <h1 id="page-title" class="lg:text-3xl text-2xl font-bold text-slate-900 justify-center max-content line-clamp-2"></h1>
+            <div class="flex items-center gap-1 sm:gap-2">
                     <button onclick="navigateTo('home-page')" class="btn-3d btn-gray p-2 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
@@ -935,8 +1181,8 @@
 
         <!-- Home Page -->
         <div id="home-page" class="page active">
-             <h1 class="text-3xl font-bold text-center mb-8 text-slate-900">🏠 صفحه اصلی</h1>
-             <div class="grid grid-cols-6 md:grid-cols-6 gap-4 text-lg">
+            <h1 class="md:text-3xl text-2xl font-bold text-center mb-8 text-slate-900">🏠 صفحه اصلی</h1>
+            <div class="grid grid-cols-6 md:grid-cols-6 gap-4 text-lg">
                 <!-- Row 1 -->
                 <button onclick="navigateTo('ai-solver-page', '🤖 پاسخ مسئله با هوش مصنوعی', this)" class="w-full text-center p-6 btn-3d btn-green col-span-6 md:col-span-6">🤖 پاسخ مسئله با هوش مصنوعی</button>
                 
@@ -963,10 +1209,10 @@
                 <!-- Row 7 -->
                 <button onclick="navigateTo('simulations-page', 'آزمایشات', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🔬 آزمایشات</button>
                 <button onclick="navigateTo('games-page', 'بازی‌ها', this)" class="w-full text-center p-6 btn-3d btn-green col-span-3 md:col-span-3">🎮 بازی‌ها</button>
-             </div>
-             <footer class="text-center mt-7 text-gray-500">
+            </div>
+            <footer class="text-center mt-7 text-gray-500">
                 <p>سازنده: کامیار گرگانلی دوجی</p>
-             </footer>
+            </footer>
         </div>
 
         <!-- AI Solver Page -->
@@ -989,7 +1235,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
-                <textarea id="ai-input" class="justify flex-grow w-full p-4 bg-transparent focus:outline-none resize-none text-slate-800 self-center" data-gramm="false" contenteditable="true" role="textbox" aria-multiline="true" max-row="7" placeholder="مسئله خود را وارد کنید..." rows="1" style="overflow: hidden;"></textarea>
+                <textarea id="ai-input" class="justify flex-grow w-full p-4 h-10 bg-transparent focus:outline-none resize-none text-slate-800 self-center" contenteditable="true" role="textbox" aria-multiline="true" max-row="7" placeholder="مسئله خود را وارد کنید..." rows="1" style="overflow: hidden;"></textarea>
                 <div class="flex w-full justify-between items-center px-2">
                 	<button title="ضمیمه کردن فایل" onclick="document.getElementById('file-input').click()" class="mb-2 p-2 btn-3d rounded-full self-right bg-AIInput text-gray-500 hover:text-slate-900">
 	                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-paperclip"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
@@ -1000,22 +1246,22 @@
             </div>
 
             <div class="relative p-4 bg-AIOutput rounded-xl min-h-[100px] mt-6">
-                 <div id="ai-output" dir="auto" class="justify">
+                <div id="ai-output" dir="auto" class="justify">
                     <p class="text-gray-500 text-center">پاسخ در اینجا نمایش داده می‌شود...</p>
-                 </div>
-                 <div id="ai-controls" class="flex item-center gap-2 mt-8 hidden">
-                 <button id="copy-button" onclick="copyAiResponse()" class="absolute bottom-2 left-12 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="کپی کردن پاسخ">
+                </div>
+                <div id="ai-controls" class="flex item-center gap-2 mt-8 hidden">
+                <button id="copy-button" onclick="copyAiResponse()" class="absolute bottom-2 left-12 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="کپی کردن پاسخ">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                 </button>
-                 <button id="tts-button" onclick="playTTS()" class="absolute bottom-2 left-2 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="خواندن متن">
+                </button>
+                <button id="tts-button" onclick="playTTS()" class="absolute bottom-2 left-2 p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="خواندن متن">
                     <!-- Speaker Icon -->
                     <svg id="tts-icon-play" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     <!-- Loading Icon -->
                     <svg id="tts-icon-loading" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-loader animate-spin hidden"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-                     <!-- Pause Icon -->
+                    <!-- Pause Icon -->
                     <svg id="tts-icon-pause" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-pause hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                 </button>
-                 </div>
+                </button>
+                </div>
             </div>
         </div>
 
@@ -1116,7 +1362,7 @@
              </div>
 
              <div id="plot-container" class="my-6 item-center bg-white mb-2 rounded-lg shadow plot-height hidden"></div>
-             <div id="kami-output" dir="auto" class="justify bg-white p-4 rounded-lg shadow min-h-[150px] mt-6" prose prose-slate max-w-none text-justify">
+             <div id="kami-output" dir="auto" class="justify bg-white p-4 rounded-lg shadow min-h-[150px] mt-6 prose prose-slate max-w-none text-justify">
                  <p class="text-gray-500 text-center">پاسخ KamiAI در اینجا نمایش داده می‌شود...</p>
              </div>
         </div>
@@ -1176,14 +1422,13 @@
         <div id="math-page" class="page">
             <h2 class="math-heading text-2xl text-center font-bold">🛠️ابزارهای ریاضی</h2>
             <div id="math-tool-buttons" class="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('prime-checker', 'آیا عدد اول است؟')">عدد اول است یا نه؟</button>
+                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('hammer-div', '🔨تقسیم چکشی')">تقسیم چکشی</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('pythagorean-theorem', 'قضیه فیثاغورس')">قضیه فیثاغورس</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('shape-perimeter', 'محیط اشکال')">محیط اشکال</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('shape-area', 'مساحت اشکال')">مساحت اشکال</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('shape-volume', 'حجم اشکال')">حجم اشکال</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-plot', 'رسم نمودار تابع')">رسم نمودار تابع</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-venn', 'رسم نمودار ون')">رسم نمودار ون</button>
-                <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-divisibility', 'بخش پذیری دو عدد')">بخش پذیری دو عدد</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-divisors', 'شمارنده ها')">شمارنده ها</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-sequences', 'دنباله‌ها')">دنباله‌ها</button>
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-tool-gcd-lcm', 'ب.م.م و ک.م.م')">ب.م.م و ک.م.م</button>
@@ -1191,14 +1436,37 @@
                  <!-- Add other math buttons here -->
             </div>
             <div id="math-tool-container">
-                <!-- Prime Checker -->
-                <div id="prime-checker" class="math-tool hidden bg-white p-4 rounded-lg shadow">
-                    <p class="mb-2"><b>عدد اول:</b> عددی طبیعی است که فقط بر ۱ و خودش بخش‌پذیر باشد.</p>
-                    <p class="mb-2"><b>عدد مرکب:</b> عددی طبیعی است که بر عددی غیر از ۱ و خودش نیز بخش‌پذیر باشد.</p>
-                    <p class="mb-2 text-center">عددی را وارد کنید تا مشخص شود اول است یا مرکب.</p>
-                    <input type="number" inputmode="numeric" id="prime-input" dir="ltr" class="p-2 border focus:outline-none rounded-lg bg-white text-center w-full mb-2" placeholder="عدد را وارد کنید" min="1">
-                    <button onclick="checkPrime()" class="p-3 w-full btn-3d btn-green">بررسی</button>
-                    <p id="prime-result" class="mt-4 text-2xl text-center font-bold"></p>
+                <!-- Hammer Split -->
+                <div id="hammer-div" class="math-tool hidden bg-white p-4 rounded-lg shadow">
+                    <div dir="ltr" style="display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: center;">
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <label for="dividend" class="text-center">مقسوم</label>
+                            <input type="number" id="dividend" class="w-full p-2 focus:outline-none border rounded-lg bg-white text-center" placeholder="مثلاً 245">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <p style="margin: auto;"></p>
+                            <p style="font-size: x-large; margin: 0;">÷</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <label for="divisor" class="text-center">مقسوم‌علیه</label>
+                            <input type="number" id="divisor" class="w-full p-2 focus:outline-none border rounded-lg bg-white text-center" placeholder="مثلاً 20">
+                        </div>
+                        <div id="hammerDiv-result-display" class="hidden">
+                            <div style="display:flex; flex-direction:column; gap:5px;">
+                                <p style="margin: auto;"></p>
+                                <p style="font-size: x-large; margin: 0; margin-right: 6px;">=</p>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:5px;">
+                                <label for="result" class="text-center">حاصل</label>
+                                <p id="hammerDiv-result" style="font-size: 1.2rem; margin: auto;"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="performHammerDivision()" class="p-3 w-full btn-3d btn-green">محاسبه و نمایش مراحل</button>
+                    <p class="error-msg" id="hDiv-error"></p>
+
+                    <div id="hammer-div-result" class="fadeIn-active text-center"></div>
+                    <div id="divisibility-result" class="hidden text-center" style="margin-top: 20px; font-size: 1.5rem; line-height: 2rem; font-weight: bold;"></div>
                 </div>
                 <!-- Pythagorean Theorem -->
                 <div id="pythagorean-theorem" class="math-tool hidden bg-white p-4 rounded-lg shadow">
@@ -1959,19 +2227,19 @@
                     </div>
 
                     <div id="plot-simple" class="plot-tab-content mt-4 space-y-2">
-                        <p class="mb-2 justify">ضابطه تابع را وارد کنید (مثلا به جای $x^2 + \sin(x)$ وارد کنید <code>x*x+sin(x)</code>).</p>
+                        <p class="mb-2 justify">ضابطه تابع را وارد کنید (مثلا به جای $x^2 + \sin(x)$ وارد کنید <code class="inline-code">x*x+sin(x)</code>).</p>
                         <div class="flex items-center gap-2">
                             <input type="text" id="math-plot-input" oninput="updateSimpleLatex()" class="p-2 border focus:outline-none rounded-lg w-full bg-white text-left" dir="ltr" placeholder="ضابطۀ تابع: f(x) =">
                             <button onclick="showPlotterHelp()" class="p-2 focus:outline-none btn-3d help-button font-bold shrink-0" title="راهنما">!</button>
                         </div>
                         <p class="mt-2 mb-2">دامنۀ تابع:</p>
                         <div class="grid grid-cols-2 flex items-center gap-2">
-                            <input type="number" inputmode="numeric" id="math-plot-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
-                            <input type="number" inputmode="numeric" id="math-plot-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
+                            <input type="text" inputmode="numeric" pattern="-?\d+(\.\d+)?" id="math-plot-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
+                            <input type="text" inputmode="numeric" pattern="-?\d+(\.\d+)?" id="math-plot-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
                         </div>
                         <button onclick="plotMathFunction()" class="mt-2 p-3 btn-3d btn-green w-full">رسم کن</button>
                         <div id="math-simple-latex" class="text-center my-4 p-3 border rounded-lg bg-gray-100 min-h-[50px] shadow-inner flex items-center justify-center relative">
-                            <span class="text-gray-500">پیش‌نمایش فرمول تابع</span>
+                            <span class="text-gray-500 overflow-x-auto overflow-y-hidden">پیش‌نمایش فرمول تابع</span>
                         </div>
                         <div id="math-plot-target" class="mt-2 item-center w-full plot-height popIn rounded-lg"></div>
                     </div>
@@ -1995,14 +2263,14 @@
                         <button onclick="addPiecewiseFormula()" class="p-2 btn-3d btn-blue w-full">+ افزودن ضابطه</button>
                         <p class="mt-4 mb-2">دامنۀ نهایی نمودار:</p>
                         <div class="grid grid-cols-2 flex items-center gap-2">
-                        	<input type="number" inputmode="numeric" id="piecewise-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
-                        	<input type="number" inputmode="numeric" id="piecewise-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
+                        	<input type="text" inputmode="numeric" id="piecewise-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
+                        	<input type="text" inputmode="numeric" id="piecewise-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
                         </div>
 
                         <button onclick="plotPiecewiseFunction()" class="mt-2 p-3 btn-3d btn-green w-full">رسم کن</button>
 
                         <div id="math-piecewise-latex" class="text-center my-4 p-3 border rounded-lg bg-gray-100 min-h-[50px] shadow-inner">
-                        	<span class="text-gray-500">پیش‌نمایش ضوابط تابع</span>
+                        	<span class="text-gray-500 overflow-x-auto overflow-y-hidden">پیش‌نمایش ضوابط تابع</span>
                         </div>
 
                         <div id="math-piecewise-target" class="mt-2 item-center w-full plot-height popIn"></div>
@@ -2020,8 +2288,8 @@
                         <button id="plotComparisonButton" onclick="addComparisonFormula()" class="p-2 btn-3d btn-blue w-full">+ افزودن تابع</button>
                         <p class="mt-4 mb-2">دامنۀ نهایی نمودار:</p>
                         <div class="grid grid-cols-2 flex items-center gap-2">
-                            <input type="number" inputmode="numeric" id="comparison-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
-                            <input type="number" inputmode="numeric" id="comparison-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
+                            <input type="text" inputmode="numeric" id="comparison-xMin" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداقل x">
+                            <input type="text" inputmode="numeric" id="comparison-xMax" class="plot-domain p-2 focus:outline-none border bg-white rounded-lg w-full text-center" dir="ltr" placeholder="حداکثر x">
                         </div>
                         <button onclick="plotComparisonFunctions()" class="mt-2 p-3 btn-3d btn-green w-full">رسم کن</button>
                         <div id="math-comparison-target" class="mt-2 item-center w-full plot-height popIn"></div>
@@ -2031,7 +2299,7 @@
                 <!-- Venn Diagram -->
                 <div id="math-tool-venn" class="math-tool hidden bg-white p-4 rounded-lg shadow">
                     <p class="mb-2">عبارت مجموعه را وارد کنید (مثال: $(A \cup B) - (A \cap C)$).</p>
-                    <p class="mb-2 text-sm text-gray-500">از $A, B, C$، $\cup$ (<code>\cup</code>، اجتماع)، $\cap$ (<code>\cap</code>، اشتراک)، $-$ (تفاضل) و $\Delta$ (<code>\Delta</code>، تفاضل متقارن) و مثلا برای متمم مجموعه A از <code>U-(A)</code> استفاده کنید.</p>
+                    <p class="mb-2 text-sm text-gray-500">از $A, B, C$، $\cup$ (<code class="inline-code">\cup</code>، اجتماع)، $\cap$ (<code class="inline-code">\cap</code>، اشتراک)، $-$ (تفاضل) و $\Delta$ (<code class="inline-code">\Delta</code>، تفاضل متقارن) و مثلا برای متمم مجموعه A از <code class="inline-code">U-(A)</code> استفاده کنید.</p>
                     <div class="flex items-center gap-2">
                         <input type="text" id="venn-input" class="p-2 focus:outline-none border rounded-lg bg-white w-full text-left" dir="ltr" placeholder="A ∪ (U - B) ∩ C">
                         <button onclick="drawVennDiagram()" class="p-3 btn-3d btn-green shrink-0">رسم کن</button>
@@ -2039,17 +2307,6 @@
                     <div class="flex justify-center items-center mt-4 p-2 bg-slate-200 rounded-lg">
                         <canvas id="venn-canvas" class="items-center" width="520" height="300"></canvas>
                     </div>
-                </div>
-
-                <!-- Divisibility -->
-                <div id="math-tool-divisibility" class="math-tool hidden bg-white p-4 rounded-lg shadow">
-                    <p class="mb-2">بررسی کنید آیا عدد $A$ بر عدد $B$ بخش‌پذیر است یا خیر.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="number" id="div-a" dir="ltr" class="p-2 focus:outline-none border bg-white text-center rounded-lg" placeholder="عدد A (مقسوم)">
-                        <input type="number" id="div-b" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg" placeholder="عدد B (مقسوم علیه)">
-                    </div>
-                    <button onclick="checkDivisibility()" class="p-3 mt-4 w-full btn-3d btn-green">بررسی کن</button>
-                    <p id="divisibility-result" class="mt-4 text-center text-2xl font-bold"></p>
                 </div>
                 
                 <!-- Divisors -->
@@ -2060,6 +2317,7 @@
                     <div id="divisor-results" class="mt-4 hidden overflow-x-auto">
                         <table class="w-full text-center border-collapse border border-gray-300 table-fixed">
                             <tbody class="align-center">
+                                <tr><td class="border p-3 font-bold w-1/3">نوع عدد</td><td id="divisor-type" class="border p-3 text-center"></td></tr>
                                 <tr class="bg-gray-50"><td class="border p-3 font-bold w-1/3">تجزیه به عوامل اول</td><td id="divisor-factorization" class="border p-3 text-center" dir="ltr"></td></tr>
                                 <tr><td class="border p-3 font-bold">شمارنده‌ها</td><td id="divisor-list" class="border p-3" style="word-break: break-word;" dir="ltr"></td></tr>
                                 <tr class="bg-gray-50"><td class="border p-3 font-bold">تعداد شمارنده‌ها</td><td id="divisor-count" class="border p-3" dir="ltr"></td></tr>
@@ -2073,6 +2331,8 @@
                             </tbody>
                         </table>
                     </div>
+                    <p class="my-2"><b>عدد اول:</b> عددی طبیعی است که فقط بر ۱ و خودش بخش‌پذیر باشد.</p>
+                    <p class="mb-2"><b>عدد مرکب:</b> عددی طبیعی است که بر عددی غیر از ۱ و خودش نیز بخش‌پذیر باشد.</p>
                 </div>
                 
                 <!-- Sequence Tools -->
@@ -2153,7 +2413,8 @@
                         </div>
                     </div>
                 </div>
-                <div id="math-tool-gcd-lcm" class="math-tool hidden bg-white p-4 rounded-lg shadow">
+
+                <div id="math-tool-gcd-lcm" class="math-tool hidden bg-white p-4 rounded-lg shadow overflow-x-hidden">
                     <p class="mb-2 justify"><b>ب.م.م (بزرگ‌‌ترین مقسوم‌ٌعلیه مشترک):</b> بزرگترین عددی که هر دو عدد بر آن بخش‌پذیر باشند $(x,y,...)$.</p>
                     <p class="mb-4 justify"><b>ک.م.م (کوچک‌ترین مضرب مشترک):</b> کوچکترین عددی که بر هر دو عدد بخش‌پذیر باشد $[x,y,...]$.</p>
                     <p class="text-gray-500 text-center text-sm mb-2">اعداد را با "فاصله" یا "کاما" از هم جدا کنید (مثلاً: 12, 18, 30)</p>
@@ -2164,8 +2425,9 @@
                     </div>
                     <button onclick="calculateMultiGcdLcm()" class="p-3 w-full btn-3d btn-green">محاسبه</button>
                     
-                    <div id="gcd-lcm-result" class="mt-6 text-2xl text-center p-4 rounded-lg hidden"></div>
+                    <div id="gcd-lcm-result" class="mt-6 text-2xl text-center p-4 rounded-lg hidden overflow-x-auto overflow-y-hidden"></div>
                 </div>
+
                 <div id="vector-calculator" class="math-tool hidden bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex gap-2 items-center mb-2" dir="ltr">
                         <p class="w-10"></p>
@@ -2176,15 +2438,15 @@
                     <div id="vector-list" class="space-y-3 mb-4">
                         <div id="v-row-1" class="flex gap-2 items-center" dir="ltr">
                             <span class="w-10 font-bold text-gray-600">$\vec{V_1}:$</span>
-                            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-                            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-                            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="decimal" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="decimal" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="decimal" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
                         </div>
                         <div id="v-row-2" class="flex gap-2 items-center" dir="ltr">
                             <span class="w-10 font-bold text-gray-600">$\vec{V_2}:$</span>
-                            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-                            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-                            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="numeric" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="numeric" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+                            <input type="text" inputmode="numeric" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
                         </div>
                     </div>
                     <button onclick="addVectorRow()" class="px-4 py-2 w-full btn-3d bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-bold">+ افزودن بردار</button>
@@ -2207,7 +2469,7 @@
                                 <svg class="w-4 h-4 ml-1" fill="currentColor" stroke="currentColor" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M281.674 253.424c11.553-14.585 24.288-28.14 38.208-40.267l-68.978-69.013c-10.828-10.867-28.404-10.867-39.275 0-10.831 10.831-10.831 28.404 0 39.235l70.046 70.043zM506.013 142.469c0.268 0 0.494 0 0.802 0 9.109 0 18.109 0.571 26.955 1.487l0-93.986c0-15.327-12.432-27.757-27.76-27.757s-27.721 12.429-27.721 27.757l0 93.968c8.846-0.895 17.842-1.469 26.956-1.469 0.27 0 0.534 0 0.762 0zM730.414 253.388l69.971-70.007c10.866-10.831 10.866-28.404 0-39.235-10.794-10.867-28.405-10.867-39.277 0l-69.018 69.013c13.958 12.123 26.695 25.664 38.324 40.227zM213.494 450.225c0-13.403 1.07-26.519 2.633-39.483l-98.682 0c-15.289 0-27.722 12.432-27.722 27.757 0 15.328 12.434 27.757 27.722 27.757l96.393 0c-0.229-5.28-0.345-10.581-0.345-16.033zM894.563 410.745l-98.643 0c1.6 12.964 2.633 26.082 2.633 39.483 0 5.45-0.115 10.753-0.305 16.033l96.315 0c15.332 0 27.722-12.429 27.722-27.757s-12.39-27.757-27.722-27.757zM745.017 638.262c-11.286 16.547-23.218 30.843-34.695 43.77l50.787 50.829c10.868 10.831 28.483 10.831 39.277 0 10.866-10.867 10.866-28.404 0-39.275l-55.37-55.324zM211.627 693.585c-10.831 10.867-10.831 28.404 0 39.275 10.868 10.831 28.448 10.831 39.275 0l50.83-50.863c-11.475-12.889-23.412-27.222-34.699-43.731l-55.403 55.324zM760.039 450.225c0.037-57.556-19.138-110.785-51.438-153.414-28.33-37.442-66.806-66.802-111.379-84.036l0.229-1.222-19.026-5.586c-14.798-4.29-30.051-7.265-45.605-8.867l-2.211-0.246-0.075 0-0.079-0.019c-7.623-0.724-15.557-1.279-23.83-1.279l-1.218 0c-8.276 0-16.207 0.557-23.833 1.279l-0.115 0.019-2.286 0.246c-15.535 1.6-30.791 4.575-45.549 8.867l-18.416 5.374 0.19 1.222c-44.802 17.214-83.505 46.651-111.99 84.244-32.258 42.628-51.438 95.854-51.438 153.414 0 41.274 7.132 75.207 18.227 103.29 16.661 42.114 42.094 70.559 62.533 92.138 10.22 10.754 19.22 19.941 25.317 27.795 6.254 7.892 9.265 13.995 10.141 18.837 4.459 23.565 4.917 53.306 4.917 60.854l0 2.174c0 34.085 27.609 61.617 61.659 61.655l142.51 0c34.092-0.037 61.659-27.609 61.659-61.655l0-2.097c-0.037-7.474 0.458-37.291 4.919-60.893 0.608-3.278 2.058-7.017 4.917-11.591 4.88-7.97 14.11-17.883 25.548-29.819 17.083-17.959 38.815-40.604 56.091-72.805 17.312-32.161 29.703-73.706 29.626-127.882zM701.813 537.676c-13.614 34.336-34.053 57.575-53.763 78.391-9.841 10.411-19.487 20.095-27.911 30.812-8.311 10.562-15.745 22.65-18.606 37.481-5.377 28.94-5.607 59.978-5.638 68.862 0 1.181 0 1.828 0 2.096-0.037 10.295-8.314 18.606-18.608 18.606l-142.51 0c-5.223 0-9.761-2.059-13.194-5.45-3.391-3.434-5.412-7.934-5.412-13.154 0-0.268 0-0.953 0-2.172-0.037-8.957-0.306-39.921-5.682-68.783-1.828-9.797-5.834-18.571-10.674-26.348-8.579-13.612-19.559-24.819-30.889-36.832-17.116-17.842-35.232-37.119-49.341-63.41-14.07-26.309-24.517-59.745-24.557-107.54 0.037-47.947 15.862-91.95 42.706-127.427 26.845-35.442 64.595-62.209 108.175-75.246l5.377-1.638c10.524-2.708 21.315-4.861 32.429-6.026l0.075 0 2.06-0.229c6.519-0.627 12.847-1.03 19.103-1.066l1.105 0.115 1.106-0.076c6.212 0 12.579 0.42 19.063 1.03l-0.079 0 2.137 0.229 0.037 0c11.093 1.163 21.887 3.277 32.372 6.026l5.451 1.638c43.582 13.037 81.329 39.807 108.175 75.246 26.801 35.478 42.666 79.482 42.666 127.427 0.003 36.409-6.094 64.511-15.169 87.446zM532.782 197.107l0.079 0zM479.17 197.107l0 0c0 0 0.037 0 0.075 0l-0.075 0zM576.706 833.825l-141.369 0c-14.604 0-26.499 11.822-26.499 26.539 0 14.564 11.899 26.465 26.499 26.465l141.369 0c14.604 0 26.499-11.899 26.499-26.465 0-14.721-11.899-26.539-26.499-26.539zM576.706 900.704l-141.369 0c-14.604 0-26.499 11.857-26.499 26.464 0 14.678 11.899 26.539 26.499 26.539l141.369 0c14.604 0 26.499-11.857 26.499-26.539 0-14.605-11.899-26.464-26.499-26.464zM518.406 968.116l-72.805 0c0 0.801-0.154 1.561-0.154 2.404 0 14.643 22.498 26.499 43.297 26.499l34.546 0c20.818 0 43.277-11.857 43.277-26.499 0-0.837-0.115-1.6-0.115-2.404l-48.044 0z"  /></svg>
                                 راهنمای تعاملی
                             </h4>
-                            <ul class="list-disc list-inside space-y-1 justify">
+                            <ul class="list-disc list-inside marker:text-blue-800 space-y-1 justify">
                                 <li>با <b>کلیک و کشیدن</b> موس یا انگشت خود، زاویه دوربین را تغییر دهید.</li>
                                 <li>با <b>اسکرول (Scroll)</b> یا کشیدن انگشت خود به بیرون، روی بردارها زوم کنید.</li>
                                 <li>با <b>نگه داشتن موس یا کلیک</b> روی هر بردار، مختصات آن را ببینید.</li>
@@ -2219,12 +2481,12 @@
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 نکات ریاضی
                             </h4>
-                            <p class="leading-relaxed justify">
-                                <b>بردار (Vector):</b> بردار، کمیتی است که اندازه و جهت را با هم دارد (پاره‌خط جهت‌دار).<br>
-                                <b>ضرب داخلی:</b> حاصل یک عدد (اسکالر) است که تصویر یک بردار بر دیگری را نشان می‌دهد و به ما می‌گوید دو بردار چقدر با هم هم‌جهت هستند.<br>
-                                <b>ضرب خارجی:</b> حاصل برداری است که بر هر دو بردار اولیه <b>عمود</b> است (قانون دست راست) و طول این بردار برابر با <b>مساحت متوازی‌الاضلاعی</b> است که این دو بردار می‌سازند.<br>
-                                <b>تفاضل:</b> برآیند بردار اول با قرینۀ بردار[های] بعدی؛ $\vec{a}-\vec{b}=\vec{a}+(-\vec{b})$.
-                            </p>
+                            <ul class="list-disc list-inside marker:text-gray-700 space-y-1 justify">
+                                <li><b>بردار (Vector):</b> بردار، کمیتی است که اندازه و جهت را با هم دارد (پاره‌خط جهت‌دار).</li>
+                                <li><b>ضرب داخلی:</b> حاصل یک عدد (اسکالر) است که تصویر یک بردار بر دیگری را نشان می‌دهد و به ما می‌گوید دو بردار چقدر با هم هم‌جهت هستند.</li>
+                                <li><b>ضرب خارجی:</b> حاصل برداری است که بر هر دو بردار اولیه <b>عمود</b> است (قانون دست راست) و طول این بردار برابر با <b>مساحت متوازی‌الاضلاعی</b> است که این دو بردار می‌سازند.</li>
+                                <li><b>تفاضل:</b> برآیند بردار اول با قرینۀ بردار[های] بعدی؛ $\vec{a}-\vec{b}=\vec{a}+(-\vec{b})$.</li>
+                            </ul>
                         </div>
                         <div class="bg-blue-50 p-4 md:col-span-2 rounded-lg">
                             <h4 class="font-bold text-blue-800 mb-3 flex items-center text-base">
@@ -2259,7 +2521,7 @@
                     </div>
                 </div>
             </div>
-            <div id="math-split-border" class="mt-5 border-t"></div>
+            <div id="math-split-border" class="border-t mt-5"></div>
             <h2 class="math-heading mt-5 text-2xl text-center font-bold">✨ابزارهای هوشمند ریاضی🛠️</h2>
             <div id="math-smartTool-buttons" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button class="w-full p-4 btn-3d btn-green" onclick="showMathTool('math-explainer', 'توضیح مفاهیم ریاضی')">توضیح مفاهیم و نظریات ریاضی</button>
@@ -2504,8 +2766,7 @@
                                     <p class="my-3 text-xl text-center">$$W = \vec{\tau} \cdot \Delta\vec{\theta}_{rad}$$</p>
                                     <p class="text-gray-500 text-sm mb-2">
                                         * $\tau$ (گشتاور): نماد Torque؛ واحد آن نیوتن-متر ($\text{N} \cdot \text{m}$) است. (کمیت برداری) <br>
-                                        * $\Delta\theta_{rad}$ (زاویه دوران برحسب رادیان): تغییر زاویه دوران در واحد رادیان. <br>
-                                        * $\theta$ (زاویه): زاویه بین بردار نیرو و جابه‌جایی برحسب درجه ($^\circ$).
+                                        * $\Delta\theta_{rad}$ (زاویه دوران برحسب رادیان): تغییر زاویه دوران در واحد رادیان.
                                     </p>
                                     <p class="text-gray-500 text-center my-3">زاویه چرخیده شده را به <b>درجه</b> وارد کنید؛ برنامه خودکار به رادیان تبدیل می‌کند.</p>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2584,16 +2845,33 @@
                 <!-- Sky Live -->
                 <div id="stellarium" class="astronomy-tool hidden bg-white p-1 rounded-lg shadow">
                     <p class="mt-2 mb-4 text-lg text-center"><b>کاوش کنید، یاد بگیرید و شگفتی کیهان را در همین لحظه ببینید.</b></p>
-                    <iframe 
-                        id="stellarium-iframe" 
+                    <iframe id="stellarium-iframe" 
                         src="" style="height: 85vh;"
                         frameborder="0" allowfullscreen 
                         class="w-full h-full border rounded-lg shadow-lg"
                         title="Stellarium Web Viewer">
                     </iframe>
+                    <div id="gps-warning" style="flex-wrap: wrap; align-content: center; justify-content: space-around; align-items: center;"
+                        class="flex transition-opacity duration-700 opacity-0 hidden pointer-events-none my-3 p-3 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800 text-center">
+                        <p id="gps-text" class="text-sm">برای نمایش دقیق آسمان محل شما، لطفاً موقعیت مکانی (GPS) دستگاه را فعال کنید.</p>
+                        <button id="gps-btn" onclick="requestGPS()"
+                            class="btn-3d px-4 py-2 rounded-md bg-green-700 text-white text-sm hover:bg-green-800">
+                            فعال‌سازی GPS
+                        </button>
+                        <div id="gps-success"
+                            class="hidden mt-3 flex items-center justify-center gap-2 text-green-700 bg-green-50 border border-green-300 rounded-md px-3 py-2 text-sm animate-success">
+                            <span class="text-lg">✔️</span>
+                            <span>GPS فعال شد؛ آسمان محل شما آماده نمایش است</span>
+                        </div>
+                    </div>
                     <p class="mt-4 text-center">با <b>Stellarium Web</b> پنجرۀ خود را به آسمان بی‌کران باز کنید و هر ستاره، سیاره و صورت فلکی را که اکنون بر فراز شما قرار دارد، مشاهده و کشف کنید.</p>
-                    <p class="p-2 mt-2 text-lg">* می‌توانید با کلیک روی<span class="inline-block align-middle mr-1"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></span> آزادی بیشتری داشته باشید.</p>
-                    <p class="p-2 mt-2 text-lg">* اگر از موبایل استفاده می‌کنید، برای تجربۀ کاربری بهتر می‌توانید صفحه را افقی گرفته و یا گزینۀ<span class="inline-block align-middle mr-1"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentcolor"><path d="m0 0h24v24h-24z" fill="none"/><path d="m7 14h-2v5h5v-2h-3v-3zm-2-4h2v-3h3v-2h-5v5zm12 7h-3v2h5v-5h-2v3zm-3-12v2h3v3h2v-5h-5z"/></svg></span> را انتخاب کنید تا آسمان را تمام صفحه مشاهده کنید.</p>
+                    <ul style="list-style-type: disc;" class="list-inside">
+                        <li class="p-2 justify mt-2">🌍 <b>GPS یا مکان‌یاب خود را روشن کنید.</b>
+                            موقعیت ستارگان و سیارات به <b>عرض و طول جغرافیایی</b> شما وابسته است. Stellarium با استفاده از GPS، دقیقاً محاسبه می‌کند که در همین لحظه کدام اجرام آسمانی بالای افق محل شما قرار دارند.
+                        </li>
+                        <li class="p-2 justify mt-2">می‌توانید با کلیک روی<span class="inline-block align-middle mr-1"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></span> آزادی بیشتری داشته باشید.</li>
+                        <li class="p-2 justify mt-2">اگر از موبایل استفاده می‌کنید، برای تجربۀ کاربری بهتر می‌توانید صفحه را افقی گرفته و یا گزینۀ<span class="inline-block align-middle mr-1"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentcolor"><path d="m0 0h24v24h-24z" fill="none"/><path d="m7 14h-2v5h5v-2h-3v-3zm-2-4h2v-3h3v-2h-5v5zm12 7h-3v2h5v-5h-2v3zm-3-12v2h3v3h2v-5h-5z"/></svg></span> را انتخاب کنید تا آسمان را تمام صفحه مشاهده کنید.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -2624,7 +2902,7 @@
             </div>
             
             <div id="lab-main-content" class="bg-white rounded-lg shadow-xl p-4">
-                <div id="lab-list-container">
+                <div id="lab-list-container" class="transition">
                     <h3 id="lab-list-title" class="text-xl font-semibold mb-4 text-center text-gray-700">لطفاً یک موضوع را انتخاب کنید.</h3>
                     <div id="lab-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
@@ -2749,7 +3027,7 @@
                 } else {
                     body.classList.remove('bg-astronomy-day-night');
                     body.style.backgroundImage = ''; // حذف استایل مستقیم
-                    document.getElementById('page-header').classList.remove('bg-header');
+                    pageHeader.classList.remove('bg-header');
                 };
                 if (pageId === 'physics-page') {
                     document.getElementById('physics-tool-buttons').classList.remove('hidden');
@@ -2959,6 +3237,75 @@
         function isDarkmode() {
             return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
+
+        const btns = document.querySelectorAll('.btn-3d');
+        btns.forEach(btn => {
+            let ripple;
+            btn.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                const span = document.createElement('span');
+                span.className = 'btn-text';
+                span.textContent = node.textContent;
+                btn.replaceChild(span, node);
+            }
+            });
+            btn.addEventListener("pointerdown", e => {
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+
+                const ripple = document.createElement("span");
+                ripple.className = "ripple";
+
+                ripple.style.width = ripple.style.height = size + "px";
+                ripple.style.left = e.clientX - rect.left - size / 2 + "px";
+                ripple.style.top  = e.clientY - rect.top  - size / 2 + "px";
+
+                btn.appendChild(ripple);
+
+                const release = () => {
+                    ripple.classList.add("fade");
+                    setTimeout(() => ripple.remove(), 350);
+
+                    btn.removeEventListener("pointerup", release);
+                    btn.removeEventListener("pointercancel", release);
+                    btn.removeEventListener("pointerleave", release);
+                };
+
+                btn.addEventListener("pointerup", release);
+                btn.addEventListener("pointercancel", release);
+                btn.addEventListener("pointerleave", release);
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            const codeEl = e.target.closest('.inline-code');
+            if (!codeEl) return;
+            if (codeEl.dataset.code) {
+                const text = codeEl.dataset.code;
+                navigator.clipboard.writeText(text).then(() => {
+                    codeEl.classList.add('copied');
+                    setTimeout(() => codeEl.classList.remove('copied'), 600);
+                });
+            } else {
+                const text = codeEl.textContent.trim();
+                navigator.clipboard.writeText(text).then(() => {
+                    codeEl.classList.add('copied');
+                    setTimeout(() => codeEl.classList.remove('copied'), 500);
+                }).catch(() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(codeEl);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    document.execCommand('copy');
+                    sel.removeAllRanges();
+                    codeEl.classList.add('copied');
+                    setTimeout(() => codeEl.classList.remove('copied'), 500);
+                });
+            }
+        });
+
+
 
         // --- Event Listener for AI Input Enter Key ---
 	function isTouchDevice() {
@@ -3450,6 +3797,58 @@
         }
 
         advancedCalcInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); solveWithAI(true); } });
+
+        function replacePlotsWithContainers(text) {
+            let plotIndex = 0;
+
+            return text.replace(/<plot>fn:\s*(.*?)<\/plot>/gs, (match, fn) => {
+                const id = `plot-${plotIndex++}`;
+                return `
+                    <div class="my-6">
+                        <div 
+                            id="${id}" 
+                            class="plot-box w-full my-6 item-center bg-white rounded-lg shadow"
+                            data-fn="${fn}"
+                        ></div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAllPlots() {
+            const plots = document.querySelectorAll('.plot-box');
+
+            const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const plotColor = isDarkMode ? '#4ade80' : '#15803d';
+
+            plots.forEach(plot => {
+                const fnRaw = plot.dataset.fn;
+
+                let fnString = fnRaw
+                    .replace(/\*\*/g, '^')
+                    .replace(/\bpi\b/gi, 'PI')
+                    .replace('arc', 'a')
+                    .replace('ar', 'a');
+
+                const rect = plot.getBoundingClientRect();
+                const plotWidth = rect.width;
+                const plotHeight = rect.height > 0 ? rect.height : 400; // خواندن ارتفاع یا پیش فرض 400
+
+                try {
+                    functionPlot({
+                        target: `#${plot.id}`,
+                        width: plotWidth + 50,
+                        height: plotHeight,
+                        data: [{ fn: fnString, color: plotColor }],
+                        grid: true,
+                        tip: { xLine: true, yLine: true },
+                    });
+                } catch (e) {
+                    plot.innerHTML = `<p class="text-red-500 text-center">خطا در رسم نمودار</p>`;
+                }
+            });
+        }
+
         
         async function solveWithAI(isAdvanced = false) {
             
@@ -3503,40 +3902,11 @@
                 
                 if (candidate && candidate.content?.parts?.[0]?.text) {
                     let rawText = candidate.content.parts[0].text;
-                    
-                    if(isAdvanced) {
-                        const plotMatch = rawText.match(/<plot>fn:\s*(.*?)<\/plot>/);
-                        if (plotMatch && plotMatch[1]) {
-                            plotContainer.classList.remove('hidden');
-                            const targetElement = document.getElementById('plot-container');
-                            
-                            const rect = targetElement.getBoundingClientRect();
-                            const plotWidth = rect.width;
-                            const plotHeight = rect.height > 0 ? rect.height : 400; // خواندن ارتفاع یا پیش فرض 400
-                            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                            const plotColor = isDarkMode ? '#4ade80' : '#15803d'; // #4ade80 برای Dark Mode (روشن) و #15803d برای Light Mode (تیره)
-                            try {
-                                // function-plot uses '^' for exponents. The model is now instructed to use '^'.
-                                // We replace any '**' with '^' as a safeguard in case the model makes a mistake.
-                                let fnString = plotMatch[1].replace(/\*\*/g, '^').replace('pi', 'PI').replace('arc', 'a').replace('ar', 'a');
 
-                                functionPlot({
-                                    target: '#plot-container',
-                                    width: plotWidth + 20,
-                                    height: plotHeight,
-                                    data: [{ fn: fnString, color: plotColor }],
-                                    grid: true,
-                                    tip: { xLine: true, yLine: true },
-                                });
-                            } catch (e) {
-                                console.error("Plotting Error:", e);
-                                plotContainer.innerHTML = `<p class="text-red-500 text-center">خطا در رسم نمودار.</p>`;
-                            }
-                            rawText = rawText.replace(/<plot>.*?<\/plot>/s, '');
-                        }
-                    }
-
-                    outputElement.innerHTML = parseAndStyleResponse(rawText);
+                    const parsed = parseAndStyleResponse(rawText);
+                    const processedText = replacePlotsWithContainers(parsed);
+                    outputElement.innerHTML = processedText;
+                    renderAllPlots();
                     
                     if (!isAdvanced) { document.getElementById('ai-controls').classList.remove('hidden'); }
                     if (window.renderMathInElement) { renderMathInElement(outputElement, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] }); }
@@ -4214,10 +4584,15 @@
                 pushNewState();
                 // اضافه کردن این بخش: اگر ابزار بردار انتخاب شد، Three.js را چک کن
                 if (toolId === 'vector-calculator') {
-                    if (!scene) {
-                        initThree(); // اگر بار اول است، بساز
+                    if (typeof THREE === 'undefined') {
+                        showMessageBox('خطا در بارگذاری!', 'بارگذاری کتابخانه‌های رسم بردارها به مشکل برخورده است.\nلطفاً اتصال خود را بررسی کنید و دوباره تلاش کنید.');
+                        return;
                     } else {
-                        onWindowResize(); // اگر قبلاً ساخته شده، ابعاد را آپدیت کن
+                        if (!scene) {
+                            initThree(); // اگر بار اول است، بساز
+                        } else {
+                            onWindowResize(); // اگر قبلاً ساخته شده، ابعاد را آپدیت کن
+                        }
                     }
                 }
                 // Re-render KaTeX in case the new tool has static formulas
@@ -4228,81 +4603,191 @@
             pageTitle.textContent = title;
         }
 
-        const input = document.getElementById('prime-input');
-        const resultEl = document.getElementById('prime-result');
-        // اجرای checkPrime با Enter
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                checkPrime();
+        function toPersianDigit(char) {
+            const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            if (char >= '0' && char <= '9') {
+                return farsiDigits[parseInt(char)];
             }
-        });
+            return char;
+        }
+        function renderRow(text, indent, isSubtraction = false, color = 'black') {
+            let html = `<div class="calc-row ${isSubtraction ? 'subtraction-row' : ''}" style="color: ${color};">`;
+            for (let i = 0; i < indent; i++) {
+                html += `<span class="spacer"></span>`;
+            }
+            for (let char of text) {
+                html += `<span class="d">${toPersianDigit(char)}</span>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+        function performHammerDivision() {
+            const dividendInput = document.getElementById('dividend').value;
+            const divisorInput = document.getElementById('divisor').value;
+            const errorMsg = document.getElementById('hDiv-error');
+            const resultArea = document.getElementById('hammer-div-result');
+            const resultDisplay = document.getElementById('hammerDiv-result');
 
-	  function checkPrime() {
-	    const num = parseInt(input.value);
+            // Reset
+            resultArea.innerHTML = '';
+            resultArea.className = '';
+            errorMsg.style.display = 'none';
+            resultDisplay.innerText = '';
+            document.getElementById('hammerDiv-result-display').style.display = 'none';
+            document.getElementById('divisibility-result').classList.add('hidden');
 
-	    if (isNaN(num) || num < 1) {
-	      resultEl.textContent = 'لطفا یک عدد طبیعی وارد کنید.';
-	      resultEl.style.color = 'red';
-	      return;
-	    }
-	
-	    if (num === 1) {
-	      resultEl.textContent = `عدد ${num} نه اول است و نه مرکب.`;
-	      resultEl.style.color = 'black';
-	      return;
-	    }
+            if (!dividendInput || !divisorInput) {
+                errorMsg.innerText = "لطفاً هر دو عدد را وارد کنید.";
+                errorMsg.style.display = 'block';
+                return;
+            }
 
-	    // بررسی اول بودن و همزمان آماده‌سازی برای تجزیه
-	    let isPrime = true;
-	    for (let i = 2, s = Math.sqrt(num); i <= s; i++) {
-	      if (num % i === 0) {
-	        isPrime = false;
-	        break;
-	      }
-	    }
+            let dividend = parseInt(dividendInput);
+            let divisor = parseInt(divisorInput);
 
-	    if (isPrime) {
-	      resultEl.textContent = `${num} عددی اول است.`;
-	      resultEl.style.color = 'green';
-	    } else {
-	      const factors = primeFactorization(num);
-	      const latex = `\\(${num} ${formatFactors(factors)}\\)`;
-	      resultEl.innerHTML = `${num} عددی مرکب است.<br>${latex}`;
-	      resultEl.style.color = 'orange';
-	      // رندر KaTeX برای فرمول لاتکسی
-	      renderMathInElement(resultEl, {
-	        delimiters: [
-	          { left: "\\(", right: "\\)", display: false },
-	          { left: "\\[", right: "\\]", display: true }
-	        ]
-	      });
+            if (divisor === 0) {
+                errorMsg.innerText = "تقسیم بر صفر ممکن نیست!";
+                errorMsg.style.display = 'block';
+                document.getElementById('divisibility-result').classList.add('hidden');
+                return;
+            }
+            if (dividend < 0 || divisor < 0) {
+                errorMsg.innerText = "لطفاً از اعداد مثبت استفاده کنید.";
+                errorMsg.style.display = 'block';
+                document.getElementById('divisibility-result').classList.add('hidden');
+                return;
+            }
 
-	    }
-	  }
+            resultDisplay.innerText = dividendInput / divisorInput;
 
-	  // تابع تجزیه به عوامل اول
-	  function primeFactorization(n) {
-	    const factors = {};
-	    let d = 2;
-	    while (n > 1) {
-	      while (n % d === 0) {
-	        factors[d] = (factors[d] || 0) + 1;
-	        n /= d;
-      }
-	      d++;
-    }
-	    return factors;
-	  }
 
-	  // فرمت نمایش توان‌دار (مثل 24 = 2³×3)
-	  function formatFactors(factors) {
-	    const parts = [];
-	    for (const [prime, power] of Object.entries(factors)) {
-	      parts.push(power > 1 ? `${prime}^{${power}}` : `${prime}`);
-	    }
-	    return `= ${parts.join(' \\times ')}`;
-	  }
+            const dividendStr = dividendInput.toString();
+            let quotientStr = "";
+            let stepsHTML = ""; 
+            
+            // --- Algorithm with Trailing Zeros (Hammer Style) ---
 
+            let currentRemainder = dividend;
+            let currentString = dividendStr;
+            let totalIndent = 0; // Tracks global indentation if needed, but here we align based on digits
+            // Render the initial Dividend
+            stepsHTML += renderRow(dividendStr, 0);
+
+            let tempArr = dividendStr.split('');
+            let pointer = 0; // Where we are in the dividend string
+            let tempValStr = "";
+            let remainingDividendStr = dividendStr;
+            let currentIndent = 0; // How many digits we have dropped from the left fully
+            // Safety break
+            let maxSteps = 20; 
+            let stepCount = 0;
+
+            let firstPass = true;
+            let accumulatedQuotient = 0;
+
+            while (currentRemainder >= divisor && stepCount < maxSteps) {
+                stepCount++;
+                let s = currentRemainder.toString();
+                // Find smallest chunk from left that >= divisor
+                let chunk = "";
+                let chunkVal = 0;
+                let chunkLen = 0;
+                
+                for(let i=1; i<=s.length; i++) {
+                    chunk = s.substring(0, i);
+                    chunkVal = parseInt(chunk);
+                    if (chunkVal >= divisor) {
+                        chunkLen = i;
+                        break;
+                    }
+                }
+                // If no chunk fits (shouldn't happen given while loop condition), break
+                if (chunkVal < divisor) break; 
+                // Calculate partial quotient for this chunk
+                let q = Math.floor(chunkVal / divisor);
+                let p = q * divisor;
+
+                let zerosCount = s.length - chunkLen;
+                // Build the number to subtract (visually)
+                let subtractValStr = p.toString();
+                for(let z=0; z<zerosCount; z++) subtractValStr += "0";
+                let subtractVal = parseInt(subtractValStr);
+                // Actual Quotient part
+                let qFull = q * Math.pow(10, zerosCount);
+                accumulatedQuotient += qFull;
+
+                // Visual Render
+                let alignIndent = dividendStr.length - s.length;
+                // Subtraction row
+                stepsHTML += renderRow(subtractValStr, alignIndent, true, '#4b5563');
+                // Bar
+                let lineLen = Math.max(s.length, subtractValStr.length);
+                let lineWidth = lineLen * 16; // 16px per digit
+                // We need a spacer for the line too
+                let lineSpacer = alignIndent * 16;
+                stepsHTML += `<div style="display:flex;"><span style="width:${lineSpacer}px"></span><div class="sub-line" style="width:${lineWidth}px"></div></div>`;
+                // Perform subtraction
+                currentRemainder -= subtractVal;
+                if (currentRemainder >= divisor) {
+                     let nextStr = currentRemainder.toString();
+                     let nextIndent = dividendStr.length - nextStr.length;
+                     stepsHTML += renderRow(nextStr, nextIndent);
+                }
+            }
+            
+            quotientStr = accumulatedQuotient.toString();
+            let finalRem = currentRemainder;
+
+            let finalRemStr = finalRem.toString();
+            let finalIndent = dividendStr.length - finalRemStr.length;
+            
+            stepsHTML += `<div class="remainder-final">
+                            <span style="font-size:0.6em; width:${finalIndent * 16}px; display:inline-block;"></span>
+                            ${renderRow(finalRemStr, 0, false, 'inherit')}
+                            <span style="font-size:0.6em; margin-right:10px; white-space:nowrap; color:black;">(باقی‌مانده)</span>
+                          </div>`;
+            
+            // Re-do Final Remainder HTML
+            let finalDigitsHtml = "";
+            for(let char of finalRemStr) {
+                finalDigitsHtml += `<span class="d">${toPersianDigit(char)}</span>`;
+            }
+            stepsHTML = stepsHTML.replace(/<div class="remainder-final">[\s\S]*$/, ""); // Remove if added purely (not needed)
+            
+            stepsHTML += `<div class="remainder-final" style="display:flex; flex-direction:row;">
+                            <span style="width:${finalIndent * 16}px; display:inline-block;"></span>
+                            ${finalDigitsHtml}
+                            <span style="font-size:0.6em; margin-right:10px; margin-left: 5px; align-self:center; color:black; font-weight: normal;">(باقی‌مانده)</span>
+                          </div>`;
+
+            const resultEl = document.getElementById('divisibility-result');
+            if (dividendInput % divisorInput === 0) {
+                resultEl.textContent = `${dividendInput} بر ${divisorInput} بخش‌پذیر است.\n $$${divisorInput}\\mid ${dividendInput}$$`;
+                resultEl.style.color = 'green';
+            } else {
+                resultEl.textContent = `${dividendInput} بر ${divisorInput} بخش‌پذیر نیست.\n $$${divisorInput}\\nmid ${dividendInput}$$`;
+                resultEl.style.color = 'orange';
+            }
+
+            // --- Final Layout ---
+            let finalHTML = `
+                <div class="division-wrapper">
+                    <div class="left-panel">
+                        ${stepsHTML}
+                    </div>
+                    <div class="right-panel">
+                        <div class="divisor-box">${renderRow(divisorInput, 0).replace(/div/g, 'span').replace(/class="calc-row"/, '')}</div>
+                        <div class="quotient-box">${renderRow(quotientStr, 0, false, 'var(--quotient-color)').replace(/div/g, 'span').replace(/class="calc-row"/, '')} <span style="color:black; font-weight:normal; font-size:0.5em;">(خارج قسمت)</span></div>
+                    </div>
+                </div>
+            `;
+
+            resultArea.innerHTML = finalHTML;
+            if (window.renderMathInElement) {
+			    renderMathInElement(resultEl);
+            }
+            setTimeout(() => { resultArea.classList.add('visible'); document.getElementById('hammerDiv-result-display').style.display = 'flex'; document.getElementById('divisibility-result').classList.remove('hidden'); }, 10);
+        }
         
         function calculatePythagorean() {
             const a = parseFloat(document.getElementById('pythagorean-a').value);
@@ -4876,7 +5361,7 @@
             const container = document.getElementById('piecewise-formulas-container');
             pieceWiseFormulaCounter++;
             const newFormulaDiv = document.createElement('div');
-            newFormulaDiv.className = 'piecewise-formula flex items-center gap-2 border p-3 rounded-lg bg-gray-50';
+            newFormulaDiv.className = 'piecewise-formula flex items-center gap-2 wipeLeft border p-3 rounded-lg bg-gray-50';
             newFormulaDiv.setAttribute('data-id', pieceWiseFormulaCounter);
             newFormulaDiv.innerHTML = `
                 <span class="font-bold text-slate-900">اگر</span>
@@ -4927,7 +5412,7 @@
                 if (typeof katex !== 'undefined' && formulas.length > 0) {
                     katex.render(latexCode, latexTarget, { displayMode: true, throwOnError: false });
                 } else if (formulas.length === 0) {
-                    latexTarget.innerHTML = '<span class="text-gray-500">پیش‌نمایش ضوابط تابع</span>';
+                    latexTarget.innerHTML = '<span class="text-gray-500 overflow-x-auto">پیش‌نمایش ضوابط تابع</span>';
                 } else {
                     latexTarget.textContent = latexCode;
                 }
@@ -5040,7 +5525,7 @@
             const name = ['f','g','h', 'i', 'j', 'k', 'l'][index];
             const newFormulaDiv = document.createElement('div');
 
-            newFormulaDiv.className = 'comparison-formula flex items-center gap-2';
+            newFormulaDiv.className = 'comparison-formula flex items-center gap-2 wipeLeft';
             newFormulaDiv.dir = 'ltr';
             newFormulaDiv.innerHTML = `
                 <input type="text" class="comp-function p-2 border border-${colors}-400 text-${colors}-700 bg-plotformula pr-3 focus:outline-none rounded-lg text-left w-full" dir="ltr" placeholder="${name}(x)=">
@@ -5350,6 +5835,23 @@
                 if (num % i === 0) return false;
             return true;
         }
+        function checkPrime(num) {            
+            if (num === 1) {
+                return `عدد ${num} نه اول است و نه مرکب.`;
+            }
+            let isPrime = true;
+            for (let i = 2, s = Math.sqrt(num); i <= s; i++) {
+                if (num % i === 0) {
+                    isPrime = false;
+                    break;
+                }
+            }
+            if (isPrime) {
+                return `${num} عددی <b>اول</b> است.`;
+            } else {
+                return `${num} عددی <b>مرکب</b> است.`;
+            }
+        }
 
         function getPrimeFactorization(num) {
             const factors = {};
@@ -5391,6 +5893,7 @@
                 return;
             }
             
+            const type = checkPrime(num);
             const factors = getPrimeFactorization(num);
             const divisors = getAllDivisors(num);
             const primeDivisors = divisors.filter(d => isPrime(d));
@@ -5398,6 +5901,7 @@
             const evenDivisors = divisors.filter(d => d % 2 === 0);
             const oddDivisors = divisors.filter(d => d % 2 !== 0);
 
+            document.getElementById('divisor-type').innerHTML = type;
             document.getElementById('divisor-factorization').textContent = `$${formatFactorization(factors)}$`;
             document.getElementById('divisor-list').textContent = '{'+divisors.join(', ')+'}';
             document.getElementById('divisor-count').textContent = divisors.length;
@@ -5425,6 +5929,7 @@
 
         // Sequence Tools
         document.getElementById('sequence-type-tabs').addEventListener('click', (e) => {
+            document.getElementById('math-tool-sequences').classList.remove('overflow-x-hidden');
             if (e.target.classList.contains('seq-type-tab-btn')) {
                 document.querySelectorAll('.seq-type-tab-btn').forEach(btn => {
                     btn.classList.remove('text-green-600', 'border-green-600');
@@ -5510,79 +6015,81 @@
 	}
 
 	function selectSequenceOperation(sequenceType, operationValue, operationLabel) {
-            const triggerBtn = document.getElementById(`${sequenceType}-operation`);
-            const labelSpan = document.getElementById(`${sequenceType}-operation-label`);
-            const optionsDiv = document.getElementById(`${sequenceType}-operation-options`);
-            const chevron = document.getElementById(`${sequenceType}-chevron`);
-            triggerBtn.setAttribute('data-operation', operationValue);
-            labelSpan.textContent = operationLabel;
-            optionsDiv.classList.add('hidden');
-            chevron.classList.remove('rotate-180');
-            showSequenceFields(sequenceType, operationValue);
+        const triggerBtn = document.getElementById(`${sequenceType}-operation`);
+        const labelSpan = document.getElementById(`${sequenceType}-operation-label`);
+        const optionsDiv = document.getElementById(`${sequenceType}-operation-options`);
+        const chevron = document.getElementById(`${sequenceType}-chevron`);
+        triggerBtn.setAttribute('data-operation', operationValue);
+        labelSpan.textContent = operationLabel;
+        optionsDiv.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+        showSequenceFields(sequenceType, operationValue);
 	}
 
 	document.addEventListener('click', (e) => {
-            if (!e.target.closest('.custom-select-container')) {
-                document.querySelectorAll('.custom-select-options').forEach(options => options.classList.add('hidden'));
-                document.querySelectorAll('.custom-select svg').forEach(svg => svg.classList.remove('rotate-180'));
-            }
+        if (!e.target.closest('.custom-select-container')) {
+            document.querySelectorAll('.custom-select-options').forEach(options => options.classList.add('hidden'));
+            document.querySelectorAll('.custom-select svg').forEach(svg => svg.classList.remove('rotate-180'));
+        }
 	});
 
 	function showSequenceFields(sequenceType, operation = null) {
-            if (!operation) {
-                operation = document.getElementById(`${sequenceType}-operation`)?.getAttribute('data-operation');
-            }
-            const container = document.getElementById(`${sequenceType}-fields-container`);
-            const resultEl = document.getElementById(`${sequenceType}-result`);
-            container.innerHTML = '';
-            resultEl.textContent = '';
-            if (!operation || !sequenceFormulas[sequenceType] || !sequenceFormulas[sequenceType][operation]) {
-                container.innerHTML = '<p class="text-center text-gray-500">پس از انتخاب عملیات، فرمول و کادرهای ورودی نمایش داده می‌شود.</p>';
-                return;
-            }
-            const { latex, inputs } = sequenceFormulas[sequenceType][operation];
-            const latexDiv = document.createElement('p');
-            latexDiv.className = 'text-center text-xl font-semibold';
-            latexDiv.innerHTML = latex;
-            container.appendChild(latexDiv);
-            inputs.forEach(input => {
-                const inputEl = document.createElement('input');
-                inputEl.type = input.type;
-                inputEl.id = input.id;
-                inputEl.dir = 'ltr';
-                inputEl.className = 'p-2 focus:outline-none border text-center bg-white rounded-lg w-full';
-                inputEl.placeholder = input.placeholder;
-                container.appendChild(inputEl);
-            });
-            if (window.renderMathInElement) {
-                window.renderMathInElement(container);
-            }
+        if (!operation) {
+            operation = document.getElementById(`${sequenceType}-operation`)?.getAttribute('data-operation');
+        }
+        const container = document.getElementById(`${sequenceType}-fields-container`);
+        const resultEl = document.getElementById(`${sequenceType}-result`);
+        container.innerHTML = '';
+        resultEl.textContent = '';
+        if (!operation || !sequenceFormulas[sequenceType] || !sequenceFormulas[sequenceType][operation]) {
+            container.innerHTML = '<p class="text-center text-gray-500">پس از انتخاب عملیات، فرمول و کادرهای ورودی نمایش داده می‌شود.</p>';
+            return;
+        }
+        const { latex, inputs } = sequenceFormulas[sequenceType][operation];
+        const latexDiv = document.createElement('p');
+        latexDiv.className = 'text-center text-xl font-semibold';
+        latexDiv.innerHTML = latex;
+        container.appendChild(latexDiv);
+        inputs.forEach(input => {
+            const inputEl = document.createElement('input');
+            inputEl.type = input.type;
+            inputEl.id = input.id;
+            inputEl.dir = 'ltr';
+            inputEl.className = 'p-2 focus:outline-none border text-center bg-white rounded-lg w-full';
+            inputEl.placeholder = input.placeholder;
+            container.appendChild(inputEl);
+        });
+        if (window.renderMathInElement) {
+            window.renderMathInElement(container);
+        }
 	}
 
 	function calculateSequence(sequenceType) {
-            const operation = document.getElementById(`${sequenceType}-operation`)?.getAttribute('data-operation');
-            const resultEl = document.getElementById(`${sequenceType}-result`);
+        const operation = document.getElementById(`${sequenceType}-operation`)?.getAttribute('data-operation');
+        const resultEl = document.getElementById(`${sequenceType}-result`);
 
-            if (sequenceType === 'arithmetic') {
-                if (operation === 'nth') return calculateArithmeticNth(resultEl);
-                if (operation === 'sum_n') return calculateArithmeticSumNTerms(resultEl);
-                if (operation === 'sum_fl') return calculateArithmeticSumFirstLast(resultEl);
-            }
+        if (sequenceType === 'arithmetic') {
+            if (operation === 'nth') return calculateArithmeticNth(resultEl);
+            if (operation === 'sum_n') return calculateArithmeticSumNTerms(resultEl);
+            if (operation === 'sum_fl') return calculateArithmeticSumFirstLast(resultEl);
+        }
 
-            else if (sequenceType === 'geometric') {
-                if (operation === 'nth') return calculateGeometricNth(resultEl);
-                if (operation === 'sum_n') return calculateGeometricSumNTerms(resultEl);
-                if (operation === 'sum_inf') return calculateGeometricSumInfinite(resultEl);
-            }
+        else if (sequenceType === 'geometric') {
+            if (operation === 'nth') return calculateGeometricNth(resultEl);
+            if (operation === 'sum_n') return calculateGeometricSumNTerms(resultEl);
+            if (operation === 'sum_inf') return calculateGeometricSumInfinite(resultEl);
+        }
 
-            else if (sequenceType === 'triangular') {
-                return calculateTriangular(resultEl);
-            }
-            else if (sequenceType === 'fibonacci') {
-                return calculateFibonacci(resultEl);
-            }
-            resultEl.textContent = 'لطفاً عملیات مورد نظر را انتخاب کنید.';
-            resultEl.className = 'mt-4 text-xl text-center font-bold text-gray-500';
+        else if (sequenceType === 'triangular') {
+            return calculateTriangular(resultEl);
+        }
+        else if (sequenceType === 'fibonacci') {
+            calculateFibonacci(resultEl);
+            document.getElementById('math-tool-sequences').classList.add('overflow-x-hidden');
+            return;
+        }
+        resultEl.textContent = 'لطفاً عملیات مورد نظر را انتخاب کنید.';
+        resultEl.className = 'mt-4 text-xl text-center font-bold text-gray-500';
 	}
 
         function calculateArithmeticNth(resultEl) {
@@ -5775,7 +6282,7 @@
                 var fn = b;
             }
             resultEl.innerHTML = `جمله ${n}-ام فیبوناچی برابر است با:<br>$F_{${n}}=${fn.toString()}$`;
-            resultEl.className = 'mt-2 text-2xl text-center font-bold text-green-600';
+            resultEl.className = 'mt-2 text-2xl text-center font-bold text-green-600 overflow-x-auto overflow-y-hidden';
 	    if (window.renderMathInElement) window.renderMathInElement(resultEl, { delimiters: [{left: '$', right: '$', display: false}] });
         }
 
@@ -6060,18 +6567,23 @@
         }
     });
     document.getElementById('gcd-lcm-input').addEventListener('input', function(e) {
-        // ۱. تبدیل اعداد فارسی/عربی به انگلیسی
         let value = e.target.value;
         const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-        
         for (let i = 0; i < 10; i++) {
             value = value.replace(new RegExp(farsiDigits[i], 'g'), i)
                         .replace(new RegExp(arabicDigits[i], 'g'), i);
         }
-
         // ۲. حذف کاراکترهای غیرمجاز (به جز عدد، فاصله و کاما)
         e.target.value = value.replace(/[^0-9, \s]/g, '');
+    });
+    document.querySelectorAll('.plot-domain, .v-x, .v-y, .v-z').forEach(function(element) {
+        element.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9.\- ]/g, '');
+            if ((this.value.match(/\./g) || []).length > 1) {
+                this.value = this.value.replace(/\.+$/, "");
+            }
+        });
     });
 
     let vectorCount = 2;
@@ -6086,9 +6598,9 @@
         div.dir = "ltr";
         div.innerHTML = `
             <span class="w-10 font-bold text-gray-600">$\\vec{V_{${vectorCount}}}:$</span>
-            <input type="number" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-            <input type="number" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
-            <input type="number" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <input type="text" inputmode="decimal" step="any" placeholder="x" class="v-x p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <input type="text" inputmode="decimal" step="any" placeholder="y" class="v-y p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
+            <input type="text" inputmode="decimal" step="any" placeholder="z" class="v-z p-2 focus:outline-none border bg-white text-center rounded-lg w-full">
             <button onclick="removeVectorRow()" class="p-2 text-red-500 hover:text-red-700 shrink-0" title="حذف بردار">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </button>
@@ -6145,12 +6657,12 @@
         ]
     } else {
         vectorColors = [
-            0xff4444, // V1: قرمز روشن
-            0x44ff44, // V2: سبز نئونی
-            0x9333ea, // V3: آبی آسمانی
-            0xff00ff, // V4: سرخابی
-            0xffa500, // V5: نارنجی
-            0x00ffff,  // V6: فیروزه‌ای
+            0xff4444,
+            0x44ff44,
+            0x9333ea,
+            0xff00ff,
+            0xffa500,
+            0x00ffff,
             0x000000,
             0x000000,
             0x000000,
@@ -6456,12 +6968,10 @@
     document.getElementById('three-container').addEventListener('mousemove', handleInteraction);
     document.getElementById('three-container').addEventListener('touchstart', handleInteraction);
 
+    
     // <!-- Smart MATH Logic -->
-
         // <!-- Math Explainer --->
     document.getElementById('math-explainer-input').addEventListener('keydown', (event) => {
-        // برای textarea، معمولاً باید Ctrl+Enter یا Shift+Enter باشد تا Enter خط جدید ایجاد نکند.
-        // اما برای سادگی، فعلاً فقط Enter را قرار می‌دهیم.
         if (!isTouchDevice()) {
             if (event.key === 'Enter' && !event.shiftKey) { 
                 event.preventDefault();
@@ -7154,8 +7664,6 @@
     function showAstronomyTool(toolId, title) {
         document.getElementById('astronomy-tool-buttons').classList.add('hidden'); // Hide button grid
         document.querySelectorAll('.astronomy-tool').forEach(tool => {
-            // حذف کلاس 'hidden' و کلاس انیمیشن از همه ابزارها 
-            // تا فقط ابزار انتخابی نمایش داده شود (در صورت وجود منطق پیچیده‌تر)
             tool.classList.add('hidden');
             tool.classList.remove('fadeIn-active');
         });
@@ -7175,218 +7683,273 @@
             if (!iframe.getAttribute('src')) {
                 iframe.setAttribute('src', 'https://stellarium-web.org/');
             }
+            monitorGPS();
         }
         pageTitle.textContent = title;
     }
 
-        // --- Custom Message Box Logic ---
+    function isMobileDevice() {
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    function requestGPS() {
+        navigator.geolocation.getCurrentPosition(
+            () => {
+                // موفق
+                showGPSSuccess();
+                scrollToStellarium();
+            },
+            () => {
+                // کاربر نخواست
+                showGPSWarning();
+            }
+        );
+    }
+
+    function showGPSWarning() {
+        const box = document.getElementById('gps-warning');
+        box.classList.remove('opacity-0', 'pointer-events-none', 'hidden');
+        box.classList.add('opacity-100');
+    }
+
+    function hideGPSWarning() {
+        const box = document.getElementById('gps-warning');
+        box.classList.remove('opacity-100');
+        box.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+    }
+
+    function monitorGPS() {
+        if (!navigator.geolocation) {
+            showGPSWarning();
+            return;
+        }
+        navigator.permissions.query({ name: 'geolocation' }).then(permission => {
+            const updateState = () => {
+                if (permission.state === 'granted') {
+                    showGPSSuccess();
+                    scrollToStellarium(); // اگر الان روشن شد → محو
+                } else {
+                    showGPSWarning(); // اگر خاموش شد → ظاهر
+                }
+            };
+            // چک اولیه
+            updateState();
+            // هر بار وضعیت تغییر کرد
+            permission.onchange = updateState;
+        });
+    }
+    if (isMobileDevice()) {
+        document.getElementById('gps-text').innerText = '📱 برای نمایش دقیق آسمان محل شما، لطفاً GPS موبایل را روشن کنید.';
+    }
+    function showGPSSuccess() {
+        const success = document.getElementById('gps-success');
+        const warning = document.getElementById('gps-warning');
+        success.classList.remove('hidden');
+        // بعد از ۲ ثانیه، هشدار محو شود
+        setTimeout(() => {
+            const box = document.getElementById('gps-warning');
+            box.classList.remove('opacity-100');
+            box.classList.add('opacity-0', 'pointer-events-none', 'hidden', 'fade-out');
+        }, 2000);
+    }
+    function scrollToStellarium() {
+        const iframe = document.getElementById('stellarium-iframe');
+        iframe.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    // --- Custom Message Box Logic ---
+    const messageBoxContainer = document.getElementById('message-box-container');
+    const messageBoxTitle = document.getElementById('message-box-title');
+    const messageBoxContent = document.getElementById('message-box-content');
+
+    function showMessageBox(title, content) {
         const messageBoxContainer = document.getElementById('message-box-container');
         const messageBoxTitle = document.getElementById('message-box-title');
         const messageBoxContent = document.getElementById('message-box-content');
+        messageBoxTitle.textContent = title;
+        messageBoxContent.innerHTML = content.replace(/\n/g, '<br>');
+        messageBoxContainer.classList.add('visible');
+    }
 
-        function showMessageBox(title, content) {
-            messageBoxTitle.textContent = title;
-            messageBoxContent.innerHTML = content.replace(/\n/g, '<br>');
-            messageBoxContainer.classList.add('visible');
-        }
-
-        function hideMessageBox() {
-            messageBoxContainer.classList.remove('visible');
-        }
+    function hideMessageBox() {
+        const messageBoxContainer = document.getElementById('message-box-container');
+        messageBoxContainer.classList.remove('visible');
+    }
 
 	document.addEventListener('keydown', function(event) {
+        const messageBoxContainer = document.getElementById('message-box-container');
         if (event.key === 'Enter' && messageBoxContainer.classList.contains('visible')) {
             event.preventDefault();
             hideMessageBox();
         }
     });
 
-        function parseAndStyleResponse(text) {
-            let html = text;
-            const latexBlocks = [];
-            const protectedBlocks = [];
-            function protectLatex(pattern) {
-                html = html.replace(pattern, (m) => {
-                    const key = `@@LATEX_${latexBlocks.length}@@`;
-                    latexBlocks.push(m);
-                    return key;
-                });
-            }
-            function protectBlock(pattern, replacementFn) {
-                html = html.replace(pattern, (match, ...args) => {
-                    const key = `@@BLOCK_${protectedBlocks.length}@@`;
-                    const replacementHtml = replacementFn(match, ...args);
-                    protectedBlocks.push(replacementHtml);
-                    return key;
-                });
-            }
-
-            protectBlock(/```(\S*)\n([\s\S]*?)```/g, (match, lang, code) => {
-                    code = code.trim(); 
-
-                    const escapedCode = code
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/"/g, "&quot;")
-                        .replace(/'/g, "&#039;");
-
-                    const uniqueId = 'code-' + Date.now() + Math.random().toString(16).substring(2, 8);
-                    return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag">${lang || 'Code'}</span><button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre></div>`;
+    function parseAndStyleResponse(text) {
+        let html = text;
+        const latexBlocks = [];
+        const protectedBlocks = [];
+        function protectLatex(pattern) {
+            html = html.replace(pattern, (m) => {
+                const key = `@@LATEX_${latexBlocks.length}@@`;
+                latexBlocks.push(m);
+                return key;
             });
-
-            // Order matters: display-math first, then inline, then \( \) and \[ \]
-            protectBlock(/\$\$[\s\S]*?\$\$/g, (m) => m);
-            protectBlock(/\\\[[\s\S]*?\\\]/g, (m) => m);
-            protectBlock(/\\\([\s\S]*?\\\)/g, (m) => m);
-            protectBlock(/\$(?:\\.|[^\$\n\\])+\$/g, (m) => m);
-
-            // Order matters: display-math first, then inline, then \( \) and \[ \]
-            protectLatex(/\$\$[\s\S]*?\$\$/g);
-            protectLatex(/\\\[[\s\S]*?\\\]/g);
-            protectLatex(/\\\([\s\S]*?\\\)/g);
-            protectLatex(/\$(?:\\.|[^\$\n\\])+\$/g);
-
-            // 1. Handle Tables
-            const tableRegex = /((?:\|.*\|[ \t]*\r?\n)\|[ \t:.\-|]+\r?\n(?:\|.*\|[ \t]*\r?\n?)*)/g;
-            html = html.replace(tableRegex, (table) => {
-                const rows = table.trim().split(/\r?\n/);
-                if (rows.length < 2) return table;
-                const separator = rows[1];
-                if (!/^(\|\s*[:\-]+\s*)+\|?$/.test(separator)) {
-                    return table; // not a markdown table header separator — keep original
-                }
-                const headerCells = rows[0].split('|').slice(1, -1).map(h => `<th>${h.trim()}</th>`).join('');
-                let body = '';
-                // Start from row 2 to skip header separator
-                for(let i = 2; i < rows.length; i++) {
-                    const line = rows[i].trim();
-                    if (!line) continue;
-                    const cells = rows[i].split('|').slice(1, -1).map(c => `<td>${c.trim()}</td>`).join('');
-                    body += `<tr>${cells}</tr>`;
-                }
-                return `<div class="overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
+        }
+        function protectBlock(pattern, replacementFn) {
+            html = html.replace(pattern, (match, ...args) => {
+                const key = `@@BLOCK_${protectedBlocks.length}@@`;
+                const replacementHtml = replacementFn(match, ...args);
+                protectedBlocks.push(replacementHtml);
+                return key;
             });
-            
-            // 2. Headers, Bold, Images, Newlines
-            html = html
-                .replace(/\\\[/g, "$$")
-                .replace(/\\\]/g, "$$")
-                .replace(/\\\(/g, "$")
-                .replace(/\\\)/g, "$")
-                .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold my-3">$1</h3>')
-                .replace(/^#### (.*$)/gm, '<h4 class="text-lg font-semibold mt-4 mb-2">$1</h4>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
-                .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
-                    const escaped = inlineCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    return `<code class="px-1 rounded">${escaped}</code>`;
-                })
-                .replace(/\n/g, '<br>');
-                
-            
-            // 3. Clean up
-            html = html.replace(/(<\/h3>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
-	        html = html.replace(/(<\/div>)<br>/g, '$1'); // پاک کردن <br> بعد از divها (مثل بلوک‌های کد)
-            latexBlocks.forEach((blk, idx) => {
-                const key = `@@LATEX_${idx}@@`;
-                html = html.split(key).join(blk);
-            });
-
-            // بازگرداندن بلوک‌ها:
-            protectedBlocks.forEach((blk, idx) => {
-                const key = `@@BLOCK_${idx}@@`;
-                html = html.split(key).join(blk);
-            });
-
-            return html;
         }
 
-        /**
-         * کپی کردن محتوای بلوک کد مشخص شده توسط ID.
-         * ابتدا از API مدرن (navigator.clipboard) استفاده می‌کند و در صورت شکست، 
-         * به روش DOM (ایجاد TextArea موقت) برمی‌گردد که سازگار با موبایل است.
-         * * @param {string} codeBlockId - ID منحصر به فرد تگ <pre>
-         */
-        function copyCodeBlock(codeBlockId) {
-            const preElement = document.getElementById(codeBlockId);
-            // محتوای کد خالص را از داخل تگ <code> استخراج کنید
-            const codeContent = preElement.querySelector('code').textContent; 
+        protectBlock(/```(\S*)\n([\s\S]*?)```/g, (match, lang, code) => {
+            code = code.trim(); 
+            const escapedCode = code
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+            const uniqueId = 'code-' + Date.now() + Math.random().toString(16).substring(2, 8);
+            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag">${lang || 'Code'}</span><button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre></div>`;
+        });
+
+        // 1. Handle Tables
+        const tableRegex = /((?:\|.*\|[ \t]*\r?\n)\|[ \t:.\-|]+\r?\n(?:\|.*\|[ \t]*\r?\n?)*)/g;
+        html = html.replace(tableRegex, (table) => {
+            const rows = table.trim().split(/\r?\n/);
+            if (rows.length < 2) return table;
+            const separator = rows[1];
+            if (!/^(\|\s*[:\-]+\s*)+\|?$/.test(separator)) {
+                return table; // not a markdown table header separator — keep original
+            }
+            const headerCells = rows[0].split('|').slice(1, -1).map(h => `<th>${h.trim()}</th>`).join('');
+            let body = '';
+            // Start from row 2 to skip header separator
+            for(let i = 2; i < rows.length; i++) {
+                const line = rows[i].trim();
+                if (!line) continue;
+                const cells = rows[i].split('|').slice(1, -1).map(c => `<td>${c.trim()}</td>`).join('');
+                body += `<tr>${cells}</tr>`;
+            }
+            return `<div class="overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
+        });
+        
+        // 2. Headers, Bold, Images, Newlines
+        html = html
+            .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold my-3">$1</h3>')
+            .replace(/^#### (.*$)/gm, '<h4 class="text-lg font-semibold mt-4 mb-2">$1</h4>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<i>$1</i>')
+            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
+            .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
+                const escaped = inlineCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                return `<code class="inline-code px-1 rounded cursor-pointer" data-code="${escaped}">${escaped}</code>`;
+            })
+            .replace(/\n/g, '<br>');
             
-            // عناصر کنترلی برای نمایش بازخورد
-            const copyButton = preElement.closest('.code-block-container').querySelector('.copy-btn');
-            const statusSpan = copyButton.querySelector('span');
-            const originalText = statusSpan.textContent;
+        
+        // 3. Clean up
+        html = html.replace(/(<\/h3>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
+        html = html.replace(/(<\/div>)<br>/g, '$1'); // پاک کردن <br> بعد از divها (مثل بلوک‌های کد)
+        latexBlocks.forEach((blk, idx) => {
+            const key = `@@LATEX_${idx}@@`;
+            html = html.split(key).join(blk);
+        });
 
-            // --- روش جایگزین (Fallback) برای کپی کردن ---
-            function fallbackCopy() {
-                let success = false;
-                try {
-                    // 1. ایجاد یک textarea موقت و مخفی
-                    const textarea = document.createElement('textarea');
-                    textarea.value = codeContent;
-                    
-                    // مخفی کردن textarea و جلوگیری از اسکرول صفحه
-                    textarea.style.position = 'fixed'; 
-                    textarea.style.top = '0';
-                    textarea.style.left = '0';
-                    textarea.style.opacity = '0';
+        // بازگرداندن بلوک‌ها:
+        protectedBlocks.forEach((blk, idx) => {
+            const key = `@@BLOCK_${idx}@@`;
+            html = html.split(key).join(blk);
+        });
 
-                    document.body.appendChild(textarea);
-                    
-                    // 2. انتخاب محتوای textarea و اجرای دستور کپی
-                    textarea.focus();
-                    textarea.select();
-                    
-                    // دستور document.execCommand('copy') در مرورگرهای جدید منسوخ شده،
-                    // اما در موبایل‌ها برای Fallback بسیار کارآمد است.
-                    success = document.execCommand('copy'); 
-                    
-                    document.body.removeChild(textarea);
+        return html;
+    }
 
-                } catch (err) {
-                    console.error('Fallback copy failed:', err);
-                    success = false;
-                }
+    function copyCodeBlock(codeBlockId) {
+        const preElement = document.getElementById(codeBlockId);
+        // محتوای کد خالص را از داخل تگ <code> استخراج کنید
+        const codeContent = preElement.querySelector('code').textContent; 
+        
+        // عناصر کنترلی برای نمایش بازخورد
+        const copyButton = preElement.closest('.code-block-container').querySelector('.copy-btn');
+        const statusSpan = copyButton.querySelector('span');
+        const originalText = statusSpan.textContent;
+
+        // --- روش جایگزین (Fallback) برای کپی کردن ---
+        function fallbackCopy() {
+            let success = false;
+            try {
+                // 1. ایجاد یک textarea موقت و مخفی
+                const textarea = document.createElement('textarea');
+                textarea.value = codeContent;
                 
-                // نمایش بازخورد بر اساس موفقیت Fallback
-                showFeedback(success ? 'کپی شد!' : 'خطا در کپی!', success);
+                // مخفی کردن textarea و جلوگیری از اسکرول صفحه
+                textarea.style.position = 'fixed'; 
+                textarea.style.top = '0';
+                textarea.style.left = '0';
+                textarea.style.opacity = '0';
+
+                document.body.appendChild(textarea);
+                
+                // 2. انتخاب محتوای textarea و اجرای دستور کپی
+                textarea.focus();
+                textarea.select();
+                
+                // دستور document.execCommand('copy') در مرورگرهای جدید منسوخ شده،
+                // اما در موبایل‌ها برای Fallback بسیار کارآمد است.
+                success = document.execCommand('copy'); 
+                
+                document.body.removeChild(textarea);
+
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                success = false;
             }
             
-            // --- نمایش بازخورد بصری ---
-            function showFeedback(message, isSuccess) {
-                statusSpan.textContent = message;
-                copyButton.classList.add(isSuccess ? 'text-green-400' : 'text-red-400');
-                
-                setTimeout(() => {
-                    statusSpan.textContent = originalText;
-                    copyButton.classList.remove('text-green-400', 'text-red-400');
-                }, 2000);
-            }
+            // نمایش بازخورد بر اساس موفقیت Fallback
+            showFeedback(success ? 'کپی شد!' : 'خطا در کپی!', success);
+        }
+        
+        // --- نمایش بازخورد بصری ---
+        function showFeedback(message, isSuccess) {
+            statusSpan.textContent = message;
+            copyButton.classList.add(isSuccess ? 'text-green-400' : 'text-red-400');
+            
+            setTimeout(() => {
+                statusSpan.textContent = originalText;
+                copyButton.classList.remove('text-green-400', 'text-red-400');
+            }, 2000);
+        }
 
-            // --- اجرای منطق اصلی ---
+        // --- اجرای منطق اصلی ---
 
-            // 1. اگر navigator.clipboard در دسترس است، از روش مدرن استفاده کن (ترجیحاً)
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(codeContent).then(() => {
-                    showFeedback('کپی شد!', true);
-                }).catch(err => {
-                    console.warn('Modern clipboard failed. Trying fallback...', err);
-                    // در صورت شکست (که در موبایل‌ها رایج است)، به روش Fallback برگرد
-                    fallbackCopy();
-                });
-            } else {
-                // 2. اگر navigator.clipboard اصلاً وجود ندارد (مرورگر بسیار قدیمی)، مستقیماً Fallback را اجرا کن
+        // 1. اگر navigator.clipboard در دسترس است، از روش مدرن استفاده کن (ترجیحاً)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(codeContent).then(() => {
+                showFeedback('کپی شد!', true);
+            }).catch(err => {
+                console.warn('Modern clipboard failed. Trying fallback...', err);
+                // در صورت شکست (که در موبایل‌ها رایج است)، به روش Fallback برگرد
                 fallbackCopy();
-            }
+            });
+        } else {
+            // 2. اگر navigator.clipboard اصلاً وجود ندارد (مرورگر بسیار قدیمی)، مستقیماً Fallback را اجرا کن
+            fallbackCopy();
         }
+    }
 
-        function highlightCodeBlocks() {
-            if (window.Prism) {
-                // این تابع تمام تگ‌های <code> با کلاس language-X را پردازش می‌کند
-                Prism.highlightAll(); 
-            }
+    function highlightCodeBlocks() {
+        if (window.Prism) {
+            // این تابع تمام تگ‌های <code> با کلاس language-X را پردازش می‌کند
+            Prism.highlightAll(); 
         }
+    }
 
 	// --- PhET Labs Data & Logic ---
         const phetLabs = {
@@ -7400,27 +7963,50 @@
         function displayLabs(subjectKey) {
             const labs = phetLabs[subjectKey];
             const listContainer = document.getElementById('lab-list');
-            document.getElementById('lab-list-container').style.display = 'block';
-            document.getElementById('lab-iframe-container').classList.add('hidden');
+            const listWrapper = document.getElementById('lab-list-container');
+            const iframeContainer = document.getElementById('lab-iframe-container');
+            if (!iframeContainer.classList.contains('hidden')) {
+                iframeContainer.classList.add('fadeIn-active');
+                listWrapper.classList.remove('fade-out');
+                setTimeout(() => {
+                    iframeContainer.classList.add('hidden');
+                    iframeContainer.classList.remove('fadeIn-active');
+                }, 350);
+            }
             const subjectTitles = { 'riazi': 'ریاضی', 'fizik': 'فیزیک', 'shimi': 'شیمی', 'zist': 'زیست' };
             document.getElementById('lab-list-title').textContent = `آزمایش‌های مجازی: ${subjectTitles[subjectKey]}`;
             listContainer.innerHTML = '';
-            labs.forEach(lab => {
+            listWrapper.style.display = 'block';
+            listContainer.classList.remove('fade-up');
+            void listWrapper.offsetWidth; // reflow
+            listWrapper.classList.add('fade-up');
+            labs.forEach((lab, index) => {
                 const labCard = document.createElement('div');
-                labCard.className = 'p-4 bg-gray-50 border-r-4 border-green-500 rounded-lg shadow-md cursor-pointer hover:bg-green-50 transition';
+                labCard.className ='p-4 bg-gray-50 border-r-4 border-green-500 rounded-lg shadow-md cursor-pointer hover:bg-green-50 transition';
                 labCard.innerHTML = `<h4 class="text-lg font-bold text-green-700">${lab.title}</h4><p class="text-sm text-gray-600 mt-1">${lab.description}</p>`;
                 labCard.onclick = () => loadPhetLab(lab.url);
                 listContainer.appendChild(labCard);
+                listContainer.classList.add('fade-up');
             });
             document.querySelectorAll('.subject-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-green-500'));
             document.querySelector(`.subject-btn[data-subject="${subjectKey}"]`).classList.add('ring-4', 'ring-green-500');
         }
 
         function loadPhetLab(labUrl) {
-            document.getElementById('lab-list-container').style.display = 'none';
-            document.getElementById('lab-iframe-container').classList.remove('hidden');
-            document.getElementById('lab-iframe').src = labUrl;
+            const listWrapper = document.getElementById('lab-list-container');
+            const iframeContainer = document.getElementById('lab-iframe-container');
+            const iframe = document.getElementById('lab-iframe');
+            listWrapper.classList.add('fade-out');
+            setTimeout(() => {
+                listWrapper.style.display = 'none';
+                iframe.src = labUrl;
+                iframeContainer.classList.remove('hidden');
+                iframeContainer.classList.remove('fade-up');
+                void iframeContainer.offsetWidth;
+                iframeContainer.classList.add('fade-up');
+            }, 150);
         }
+
 
         function initializeLabsPage() {
             document.querySelectorAll('.subject-btn').forEach(button => {
@@ -7513,7 +8099,6 @@
             document.querySelectorAll('.menu-item, .submenu-item').forEach(el => {
                 el.classList.remove('active', 'active-sub', 'active-parent');
             });
-
             // ۱. اگر ابزار خاصی (مثل ماشین حساب پیشرفته) باز شده
             const targetId = toolId || pageId;
             const activeBtn = document.querySelector(`[onclick*="'${targetId}'"]`);
@@ -7524,6 +8109,8 @@
                     // باز کردن ساب‌منو به صورت خودکار و هایلایت کردن والد
                     const parentSub = activeBtn.closest('.submenu');
                     if (parentSub) {
+                        document.querySelectorAll('.submenu').forEach(s => s.classList.remove('open'));
+                        document.querySelectorAll('.arrow-icon').forEach(s => s.classList.remove('rotated'));
                         parentSub.classList.add('open');
                         parentSub.previousElementSibling.querySelector('.arrow-icon').classList.add('rotated');
                         parentSub.previousElementSibling.classList.add('active-parent');
@@ -7594,6 +8181,10 @@
         const originalShowPhysicsBranch = showPhysicsBranch;
         showPhysicsBranch = function(branchId, element = null) {
             document.getElementById('math-solver').classList.add('hidden');
+            document.body.classList.remove('bg-astronomy-day-night');
+            document.body.style.backgroundImage = '';
+            document.getElementById('page-header').classList.remove('hidden');
+            document.getElementById('page-header').classList.remove('bg-header');
             const physicsPage = document.getElementById('physics-page');
             if (!physicsPage.classList.contains('active')) {
                 document.getElementById('page-header').classList.remove('hidden');
@@ -7709,6 +8300,8 @@
                 sub.classList.remove('open');
                 arrow.classList.remove('rotated');
             } else {
+                document.querySelectorAll('.submenu').forEach(s => s.classList.remove('open'));
+                document.querySelectorAll('.arrow-icon').forEach(s => s.classList.remove('rotated'));
                 sub.classList.add('open');
                 arrow.classList.add('rotated');
             }
