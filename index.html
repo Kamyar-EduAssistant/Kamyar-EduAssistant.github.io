@@ -57,6 +57,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <!-- Pyodide for Python Console Render -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
 
     <style>
         :root {
@@ -115,9 +117,6 @@
 
         /* Layout adjustment for Desktop */
         @media (min-width: 1024px) {
-            body, #page-header {
-                transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
             body.sidebar-open {
                 padding-right: 18rem; /* 72 units (w-72) */
             }
@@ -129,10 +128,8 @@
             }
             #main-sidebar { opacity: 1 !important; }
         }
-        @media (max-width: 82rem) {
-            #page-header div.flex {
-                padding-right: 55px; /* هدر را کمی به چپ هل می‌دهد تا با دکمه تداخل نکند */
-            }
+        #page-header div.flex {
+            padding-right: 55px; /* هدر را کمی به چپ هل می‌دهد تا با دکمه تداخل نکند */
         }
 
         /* Active Menu Style */
@@ -241,9 +238,7 @@
             transition: opacity 0.3s ease-out;
         }
         @keyframes grow {
-            to {
-                transform: scale(3);
-            }
+            to { transform: scale(3); }
         }
 
         /* Specific colors */
@@ -470,6 +465,12 @@
             background-origin: content-box;
             background-attachment: local;
         }
+        pre[class*=language-] {
+            margin: 0 !important;
+        }
+        pre[class*=language-]:after, pre[class*=language-]:before {
+            box-shadow: none !important;
+        }
 
         .inline-code {
             cursor: pointer;
@@ -485,7 +486,92 @@
             50% { box-shadow: 0 0px 15px rgba(88, 218, 133, 0.65); }
             100% { box-shadow: 0 0px 0px rgb(152 233 180 / 0%); }
         }
-
+        .preview-btn {
+            margin-right: 8px;
+            margin-left: 6px;
+            padding-right: 8px;
+        }
+        #html-preview-container {
+            background: var(--bg-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 35%;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 1000;
+            justify-content: flex-end; /* نمایش در سمت چپ */
+            transform: translateX(-100.06%); /* پیش‌فرض بسته */
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        #html-preview-container.show {
+            transform: translateX(0);
+        }
+        #preview-iframe {
+            width: 100%;
+            flex-grow: 1;
+            border: none;
+        }
+        @media (max-width: 948px) {
+            #html-preview-container, #html-preview-header, #preview-iframe {
+                width: 100%;
+                border-radius: 0 !important;
+            }
+        }
+        @media (min-width: 948px) {
+            body, #page-header {
+                transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.canvas-open {
+                padding-left: 35vw;
+            }
+            /* Center content in remaining space */
+            body.canvas-open #main-content #page-header {
+                max-width: calc(100vw - 35vw);
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+        .latexCode-output {
+            background-color: var(--bg-color) !important;
+            color: var(--primary-color) !important;
+            padding: 20px !important;
+            border: 1px solid var(--card-bg);
+            border-radius: 10px !important;
+            overflow-x: auto !important;
+            text-align: center; /* فرمول‌ها وسط‌چین باشند */
+            font-size: 1.2rem !important;
+        }
+        .console-output {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Google Sans Code', monospace;
+            padding: 10px;
+            margin-top: 2px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none; /* در ابتدا مخفی است */
+        }
+        .console-input-line {
+            display: flex;
+            gap: 5px;
+            color: #fff;
+        }
+        .console-input-line input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            outline: none;
+            flex-grow: 1;
+        }
 
         /* Advanced Calculator Styles */
         .palette-tabs button { transition: all 0.2s ease-in-out; border-bottom: 3px solid transparent; }
@@ -530,8 +616,16 @@
         }
 
         /* Table Styles */
-        .ai-table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; }
-        .ai-table th, .ai-table td { border: 1px solid #d1d5db; padding: 0.75rem; text-align: right; }
+        .table-wrapper {
+            border-radius: 18px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 5%);
+        }
+        .ai-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .ai-table th, .ai-table td { border-bottom: 1px solid #d1d5db; border-left: 1px solid #d1d5db; padding: 0.75rem; text-align: right; }
+        .ai-table th:last-child, .ai-table td:last-child { border-left: none; }
+        .ai-table tr:last-child td { border-bottom: none; }
         .ai-table th { background-color: #f3f4f6; font-weight: bold; }
         .ai-table tr:nth-child(even) { background-color: #f9fafb; }
 
@@ -575,7 +669,6 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start; /* Ensure left alignment for LTR numbers */
-            padding-right: 15px;
         }
 
         .right-panel {
@@ -662,6 +755,9 @@
         }
         .comp-function {
             border-left: 10px solid !important;
+        }
+        #divisor-results tr:last-child td {
+            border-bottom: none;
         }
 
         #three-container canvas {
@@ -848,11 +944,9 @@
             }
             .bg-white {
             	background-color: #30343b !important; /* Dark Blue-Gray */
-            	border-color: #475569 !important; /* Darker border */
             }
             .bg-slate-200 {
             	background-color: #121212 !important; /* Dark */
-            	border-color: #475569 !important; /* Darker border */
             }
             .bg-blue-50 {
                 background-color: #262a2f !important;
@@ -895,7 +989,8 @@
             	color: #f8fafc;
             }
             .ai-table th, .ai-table td { 
-            	border: 1px solid #415c3b; /* خطوط روشن‌تر */
+            	border-bottom: 1px solid #415c3b;
+                border-left: 1px solid #415c3b;
             }
             .ai-table th { 
             	background-color: #3c5736ab; 
@@ -1437,7 +1532,7 @@
             </div>
             <div id="math-tool-container">
                 <!-- Hammer Split -->
-                <div id="hammer-div" class="math-tool hidden bg-white p-4 rounded-lg shadow">
+                <div id="hammer-div" class="math-tool hidden bg-white p-4 rounded-lg shadow overflow-x-auto">
                     <div dir="ltr" style="display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: center;">
                         <div style="display:flex; flex-direction:column; gap:5px;">
                             <label for="dividend" class="text-center">مقسوم</label>
@@ -2314,20 +2409,20 @@
                     <p class="mb-2">عدد مورد نظر را برای تحلیل شمارنده‌ها وارد کنید.</p>
                     <input type="number" id="divisor-input" class="p-2 focus:outline-none border rounded-lg w-full bg-white text-center mb-2" dir="ltr" placeholder="عدد را وارد کنید (مثبت)">
                     <button onclick="analyzeDivisors()" class="p-3 btn-3d btn-green w-full">تحلیل کن</button>
-                    <div id="divisor-results" class="mt-4 hidden overflow-x-auto">
-                        <table class="w-full text-center border-collapse border border-gray-300 table-fixed">
+                    <div id="divisor-results" class="mt-4 hidden overflow-x-hidden border border-gray-300" style="border-radius: 20px; box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 5%);">
+                        <table class="w-full text-center table-fixed"style="border-spacing: 0; border: none; border-collapse: separate;">
                             <tbody class="align-center">
-                                <tr><td class="border p-3 font-bold w-1/3">نوع عدد</td><td id="divisor-type" class="border p-3 text-center"></td></tr>
-                                <tr class="bg-gray-50"><td class="border p-3 font-bold w-1/3">تجزیه به عوامل اول</td><td id="divisor-factorization" class="border p-3 text-center" dir="ltr"></td></tr>
-                                <tr><td class="border p-3 font-bold">شمارنده‌ها</td><td id="divisor-list" class="border p-3" style="word-break: break-word;" dir="ltr"></td></tr>
-                                <tr class="bg-gray-50"><td class="border p-3 font-bold">تعداد شمارنده‌ها</td><td id="divisor-count" class="border p-3" dir="ltr"></td></tr>
-                                <tr><td class="border p-3 font-bold">شمارنده‌های اول</td><td id="divisor-prime-list" class="border p-3" style="word-break: break-word;" dir="ltr"></td></tr>
-                                <tr class="bg-gray-50"><td class="border p-3 font-bold">تعداد شمارنده‌های اول</td><td id="divisor-prime-count" class="border p-3" dir="ltr"></td></tr>
-                                <tr><td class="border p-3 font-bold">شمارنده‌های مرکب</td><td id="divisor-composite-list" class="border p-3" style="word-break: break-word;" dir="ltr"></td></tr>
-                                <tr class="bg-gray-50"><td class="border p-3 font-bold">تعداد شمارنده‌های مرکب</td><td id="divisor-composite-count" class="border p-3" dir="ltr"></td></tr>
-                                <tr><td class="border p-3 font-bold">تعداد شمارنده‌های زوج</td><td id="divisor-even-count" class="border p-3" dir="ltr"></td></tr>
-                                <tr class="bg-gray-50"><td class="border p-3 font-bold">تعداد شمارنده‌های فرد</td><td id="divisor-odd-count" class="border p-3" dir="ltr"></td></tr>
-                                <tr><td class="border p-3 font-bold">تعداد شمارنده‌های صحیح</td><td id="divisor-integer-count" class="border p-3" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold w-1/3 border-b border-l border-gray-300">نوع عدد</td><td id="divisor-type" class="p-3 text-center border-b border-gray-300"></td></tr>
+                                <tr class="bg-gray-50"><td class="p-3 font-bold w-1/3 border-b border-l border-gray-300">تجزیه به عوامل اول</td><td id="divisor-factorization" class="p-3 text-center border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold border-b border-l border-gray-300">شمارنده‌ها</td><td id="divisor-list" class="p-3 border-b border-gray-300" style="word-break: break-word;" dir="ltr"></td></tr>
+                                <tr class="bg-gray-50"><td class="p-3 font-bold border-b border-l border-gray-300">تعداد شمارنده‌ها</td><td id="divisor-count" class="p-3 border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold border-b border-l border-gray-300">شمارنده‌های اول</td><td id="divisor-prime-list" class="p-3 border-b border-gray-300" style="word-break: break-word;" dir="ltr"></td></tr>
+                                <tr class="bg-gray-50"><td class="p-3 font-bold border-b border-l border-gray-300">تعداد شمارنده‌های اول</td><td id="divisor-prime-count" class="p-3 border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold border-b border-l border-gray-300">شمارنده‌های مرکب</td><td id="divisor-composite-list" class="p-3 border-b border-gray-300" style="word-break: break-word;" dir="ltr"></td></tr>
+                                <tr class="bg-gray-50"><td class="p-3 font-bold border-b border-l border-gray-300">تعداد شمارنده‌های مرکب</td><td id="divisor-composite-count" class="p-3 border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold border-b border-l border-gray-300">تعداد شمارنده‌های زوج</td><td id="divisor-even-count" class="p-3 border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr class="bg-gray-50"><td class="p-3 font-bold border-b border-l border-gray-300">تعداد شمارنده‌های فرد</td><td id="divisor-odd-count" class="p-3 border-b border-gray-300" dir="ltr"></td></tr>
+                                <tr><td class="p-3 font-bold border-l border-gray-300">تعداد شمارنده‌های صحیح</td><td id="divisor-integer-count" class="p-3" dir="ltr"></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2980,6 +3075,13 @@
         </div>
     </div>
 
+    <aside id="html-preview-container" onclick="event.stopPropagation()">
+        <div id="html-preview-header" class="flex justify-between items-center p-4 bg-gray-100 border-b" style="border-top-right-radius: 20px;">
+            <h3 class="font-bold">پیش‌نمایش بصری</h3>
+            <button onclick="closeHtmlPreview()" class="text-red-500 font-bold">✕</button>
+        </div>
+        <iframe id="preview-iframe" style="border-bottom-right-radius: 20px;"></iframe>
+    </aside>
 
     <script>
         // --- Navigation and Page Management ---
@@ -4610,7 +4712,7 @@
             }
             return char;
         }
-        function renderRow(text, indent, isSubtraction = false, color = 'black') {
+        function renderRow(text, indent, isSubtraction = false, color = 'var(--secondary-color)') {
             let html = `<div class="calc-row ${isSubtraction ? 'subtraction-row' : ''}" style="color: ${color};">`;
             for (let i = 0; i < indent; i++) {
                 html += `<span class="spacer"></span>`;
@@ -4671,7 +4773,7 @@
             let currentString = dividendStr;
             let totalIndent = 0; // Tracks global indentation if needed, but here we align based on digits
             // Render the initial Dividend
-            stepsHTML += renderRow(dividendStr, 0);
+            stepsHTML += renderRow(dividendStr, 0, false, 'var(--secondary-color)');
 
             let tempArr = dividendStr.split('');
             let pointer = 0; // Where we are in the dividend string
@@ -4719,7 +4821,7 @@
                 // Visual Render
                 let alignIndent = dividendStr.length - s.length;
                 // Subtraction row
-                stepsHTML += renderRow(subtractValStr, alignIndent, true, '#4b5563');
+                stepsHTML += renderRow(subtractValStr, alignIndent, true, 'var(--third-color)');
                 // Bar
                 let lineLen = Math.max(s.length, subtractValStr.length);
                 let lineWidth = lineLen * 16; // 16px per digit
@@ -4744,7 +4846,7 @@
             stepsHTML += `<div class="remainder-final">
                             <span style="font-size:0.6em; width:${finalIndent * 16}px; display:inline-block;"></span>
                             ${renderRow(finalRemStr, 0, false, 'inherit')}
-                            <span style="font-size:0.6em; margin-right:10px; white-space:nowrap; color:black;">(باقی‌مانده)</span>
+                            <span style="font-size:0.6em; margin-right:10px; white-space:nowrap; color: var(--secondary-color); font-weight: normal;">(باقی‌مانده)</span>
                           </div>`;
             
             // Re-do Final Remainder HTML
@@ -4757,7 +4859,7 @@
             stepsHTML += `<div class="remainder-final" style="display:flex; flex-direction:row;">
                             <span style="width:${finalIndent * 16}px; display:inline-block;"></span>
                             ${finalDigitsHtml}
-                            <span style="font-size:0.6em; margin-right:10px; margin-left: 5px; align-self:center; color:black; font-weight: normal;">(باقی‌مانده)</span>
+                            <span style="font-size:0.6em; margin-right:10px; margin-left: 5px; align-self:center; color: var(--secondary-color); font-weight: normal;">(باقی‌مانده)</span>
                           </div>`;
 
             const resultEl = document.getElementById('divisibility-result');
@@ -4776,8 +4878,8 @@
                         ${stepsHTML}
                     </div>
                     <div class="right-panel">
-                        <div class="divisor-box">${renderRow(divisorInput, 0).replace(/div/g, 'span').replace(/class="calc-row"/, '')}</div>
-                        <div class="quotient-box">${renderRow(quotientStr, 0, false, 'var(--quotient-color)').replace(/div/g, 'span').replace(/class="calc-row"/, '')} <span style="color:black; font-weight:normal; font-size:0.5em;">(خارج قسمت)</span></div>
+                        <div class="divisor-box">${renderRow(divisorInput, 0, false, 'var(--secondary-color)').replace(/div/g, 'span').replace(/class="calc-row"/, '')}</div>
+                        <div class="quotient-box">${renderRow(quotientStr, 0, false, 'var(--quotient-color)').replace(/div/g, 'span').replace(/class="calc-row"/, '')} <span style="color: var(--secondary-color); font-weight:normal; font-size:0.5em;">(خارج قسمت)</span></div>
                     </div>
                 </div>
             `;
@@ -4788,6 +4890,12 @@
             }
             setTimeout(() => { resultArea.classList.add('visible'); document.getElementById('hammerDiv-result-display').style.display = 'flex'; document.getElementById('divisibility-result').classList.remove('hidden'); }, 10);
         }
+        document.getElementById('divisor').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                performHammerDivision();
+            }
+        });
         
         function calculatePythagorean() {
             const a = parseFloat(document.getElementById('pythagorean-a').value);
@@ -7816,7 +7924,47 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
             const uniqueId = 'code-' + Date.now() + Math.random().toString(16).substring(2, 8);
-            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag">${lang || 'Code'}</span><button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre></div>`;
+            let visibleLang;
+            if (lang === 'python') visibleLang = 'Python';
+            else if (lang === 'javascript' || lang === 'js') visibleLang = 'JavaScript';
+            else if (lang === 'html') visibleLang = 'HTML';
+            else if (lang === 'css') visibleLang = 'CSS';
+            else if (lang === 'java') visibleLang = 'Java';
+            else if (lang === 'c++' || lang === 'cpp') visibleLang = 'C++';
+            else if (lang === 'c#' || lang === 'csharp') visibleLang = 'C#';
+            else if (lang === 'ruby') visibleLang = 'Ruby';
+            else if (lang === 'go') visibleLang = 'Go';
+            else if (lang === 'php') visibleLang = 'PHP';
+            else if (lang === 'swift') visibleLang = 'Swift';
+            else if (lang === 'kotlin') visibleLang = 'Kotlin';
+            else if (lang === 'rust') visibleLang = 'Rust';
+            else if (lang === 'typescript' || lang === 'ts') visibleLang = 'TypeScript';
+            else if (lang === 'latex') visibleLang = 'LaTeX';
+            else if (lang) visibleLang = lang.charAt(0).toUpperCase() + lang.slice(1);
+            else visibleLang = 'Code';
+            let previewBtn;
+            if (lang.toLowerCase() === 'html') {
+                previewBtn = `<button onclick="openHtmlPreview('${uniqueId}')" class="preview-btn flex items-center p-1 text-gray dark:hover:text-cyan-500 hover:text-blue-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span class="mx-1">پیش‌نمایش</span>
+                    </button>`;
+            } else if (lang.toLowerCase() === 'latex' || lang.toLowerCase() === 'tex') {
+                previewBtn = `<button onclick="renderLatexCode('${uniqueId}')" class="preview-btn flex items-center p-1 text-gray dark:hover:text-cyan-500 hover:text-blue-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span class="mx-1">پیش‌نمایش</span>
+                    </button>`;
+            } else {
+                previewBtn = '';
+            }
+            const executableLangs = ['python', 'javascript', 'js', 'py'];
+            const isExecutable = executableLangs.includes(lang?.toLowerCase());
+
+            const runBtn = isExecutable ? `
+                <button onclick="runCode('${uniqueId}', '${lang}')" class="run-btn flex items-center p-1 text-green-600 hover:text-green-800 transition ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <span class="mx-1">اجرا</span>
+                </button>` : '';
+            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag">${visibleLang}</span><div class="flex items-center">${previewBtn}${runBtn}<button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre><div id="console-${uniqueId}" class="console-output"></div></div>`;
         });
 
         // 1. Handle Tables
@@ -7826,7 +7974,7 @@
             if (rows.length < 2) return table;
             const separator = rows[1];
             if (!/^(\|\s*[:\-]+\s*)+\|?$/.test(separator)) {
-                return table; // not a markdown table header separator — keep original
+                return table;
             }
             const headerCells = rows[0].split('|').slice(1, -1).map(h => `<th>${h.trim()}</th>`).join('');
             let body = '';
@@ -7837,16 +7985,18 @@
                 const cells = rows[i].split('|').slice(1, -1).map(c => `<td>${c.trim()}</td>`).join('');
                 body += `<tr>${cells}</tr>`;
             }
-            return `<div class="overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
+            return `<div class="table-wrapper overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
         });
         
         // 2. Headers, Bold, Images, Newlines
         html = html
-            .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold my-3">$1</h3>')
-            .replace(/^#### (.*$)/gm, '<h4 class="text-lg font-semibold mt-4 mb-2">$1</h4>')
+            .replace(/^### (.*$)/gm, '<h2 class="text-3xl font-bold my-3">$1</h2>')
+            .replace(/^#### (.*$)/gm, '<h3 class="text-2xl font-semibold mt-4 mb-2">$1</h3>')
+            .replace(/^##### (.*$)/gm, '<h4 class="text-xl font-semibold mt-4 mb-2">$1</h4>')
+            .replace(/^###### (.*$)/gm, '<h5 class="text-lg font-semibold mt-4 mb-2">$1</h5>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<i>$1</i>')
             .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
+            .replace(/^---$/gm, '<hr class="my-6 border-t-0 border-b border-[#e5ebe6] dark:border-[#353936]">')
             .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
                 const escaped = inlineCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 return `<code class="inline-code px-1 rounded cursor-pointer" data-code="${escaped}">${escaped}</code>`;
@@ -7943,11 +8093,118 @@
             fallbackCopy();
         }
     }
-
     function highlightCodeBlocks() {
         if (window.Prism) {
-            // این تابع تمام تگ‌های <code> با کلاس language-X را پردازش می‌کند
             Prism.highlightAll(); 
+        }
+    }
+
+    function openHtmlPreview(codeBlockId) {
+        const code = document.getElementById(codeBlockId).querySelector('code').textContent;
+        const modal = document.getElementById('html-preview-container');
+        const iframe = document.getElementById('preview-iframe');
+        // تزریق کد به iframe
+        modal.classList.add('show');
+        document.body.classList.add('canvas-open');
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(code);
+        doc.close();
+    }
+    function closeHtmlPreview() {
+        document.getElementById('html-preview-container').classList.remove('show');
+        document.body.classList.remove('canvas-open');
+    }
+
+    function renderLatexCode(uniqueId) {
+        const codeElement = document.getElementById(uniqueId).querySelector('code');
+        const rawLatex = codeElement.textContent;
+        // پیدا کردن یا ساختن کادر خروجی (از همان کلاس کنسول استفاده می‌کنیم با کمی تغییر)
+        let outputDiv = document.getElementById(`console-${uniqueId}`);
+        // تنظیم ظاهر برای لاتکس
+        outputDiv.classList.add('latexCode-output');
+        outputDiv.style.display = 'block';
+        outputDiv.innerHTML = ''; // پاکسازی قبلی
+        const mathRegex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|(?<!\\)\$[\s\S]*?\$)/g;
+        const matches = rawLatex.match(mathRegex);
+        if (matches && matches.length > 0) {
+            // چسباندن تمام فرمول‌های پیدا شده به هم با فاصله
+            const onlyMath = matches.join('<br><br>');
+            outputDiv.innerHTML = onlyMath;
+            renderMathInElement(outputDiv, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        } else {
+            outputDiv.innerHTML = `<span style="color:#aaa; font-size: 0.9rem;">فرمول ریاضی معتبری برای نمایش پیدا نشد.</span>`;
+        }
+    }
+
+    let pyodide = null;
+    async function initPyodide() {
+        if (!pyodide) {
+            pyodide = await loadPyodide();
+        }
+    }
+    async function runCode(uniqueId, lang) {
+        const code = document.getElementById(uniqueId).querySelector('code').textContent;
+        const consoleDiv = document.getElementById(`console-${uniqueId}`);
+        consoleDiv.style.display = 'block';
+        consoleDiv.innerHTML = '<span style="color: #aaa;">> در حال آماده‌سازی محیط اجرا...</span>\n';
+        if (lang === 'python' || lang === 'py') {
+            try {
+                await initPyodide();
+                // تنظیم خروجی کنسول
+                pyodide.setStdout({
+                    batched: (str) => {
+                        consoleDiv.innerText += str + '\n';
+                        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                    }
+                });
+                // تعریف تابع ورودی هوشمند
+                // استفاده از یک تابع Global برای فراخوانی از داخل پایتون
+                window.getPythonInput = (promptText) => {
+                    const userInput = prompt(promptText || "ورودی را وارد کنید:");
+                    if (userInput === null) throw new Error("اجرا توسط کاربر لغو شد.");
+                    return userInput;
+                };
+                // بازنویسی input در پایتون با اتصال به تابع JS
+                await pyodide.runPythonAsync(`
+    import builtins
+    from js import getPythonInput
+
+    def custom_input(prompt=""):
+        return getPythonInput(prompt)
+
+    builtins.input = custom_input
+                `);
+                // اجرای کد اصلی کاربر
+                await pyodide.runPythonAsync(code);
+                consoleDiv.innerHTML += '<span style="color: #555;">\n[اجرا با موفقیت پایان یافت]</span>';
+
+            } catch (err) {
+                // نمایش خطا (شامل خطای لغو توسط کاربر)
+                consoleDiv.innerHTML += `\n<span style="color:#ff6b6b">❌ خطا: ${err.message}</span>`;
+            }
+        }
+        else if (lang === 'javascript' || lang === 'js') {
+            try {
+                // ذخیره کنسول اصلی
+                const oldLog = console.log;
+                consoleDiv.innerHTML = '';
+                console.log = function(msg) {
+                    consoleDiv.innerText += msg + '\n';
+                };
+                eval(code);
+                console.log = oldLog; // بازگرداندن کنسول
+            } catch (err) {
+                consoleDiv.innerHTML += `<span style="color:red">خطا: ${err.message}</span>`;
+            }
         }
     }
 
@@ -8300,8 +8557,6 @@
                 sub.classList.remove('open');
                 arrow.classList.remove('rotated');
             } else {
-                document.querySelectorAll('.submenu').forEach(s => s.classList.remove('open'));
-                document.querySelectorAll('.arrow-icon').forEach(s => s.classList.remove('rotated'));
                 sub.classList.add('open');
                 arrow.classList.add('rotated');
             }
