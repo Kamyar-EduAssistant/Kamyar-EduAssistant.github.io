@@ -944,12 +944,15 @@
             }
             .bg-white {
             	background-color: #30343b !important; /* Dark Blue-Gray */
+                border-color: #475569 !important; /* Darker border */
             }
             .bg-slate-200 {
             	background-color: #121212 !important; /* Dark */
+                border-color: #475569 !important; /* Darker border */
             }
             .bg-blue-50 {
                 background-color: #262a2f !important;
+                border-color: #475569;
             }
             .bg-blue-100 {
                 background-color: #1f2125 !important;
@@ -7862,9 +7865,11 @@
     }
     function scrollToStellarium() {
         const iframe = document.getElementById('stellarium-iframe');
-        iframe.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
+        requestAnimationFrame(() => {
+            iframe.scrollIntoView({
+                top: 0,
+                behavior: 'smooth'
+            });
         });
     }
 
@@ -7964,7 +7969,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     <span class="mx-1">اجرا</span>
                 </button>` : '';
-            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag">${visibleLang}</span><div class="flex items-center">${previewBtn}${runBtn}<button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre><div id="console-${uniqueId}" class="console-output"></div></div>`;
+            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag font-bold">${visibleLang}</span><div class="flex items-center">${previewBtn}${runBtn}<button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre><div id="console-${uniqueId}" class="console-output"></div></div>`;
         });
 
         // 1. Handle Tables
@@ -8005,8 +8010,9 @@
             
         
         // 3. Clean up
-        html = html.replace(/(<\/h3>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
+        html = html.replace(/(<\/h3>)<br>/g, '$1').replace(/(<\/h2>)<br>/g, '$1').replace(/(<\/h4>)<br>/g, '$1').replace(/(<\/h5>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
         html = html.replace(/(<\/div>)<br>/g, '$1'); // پاک کردن <br> بعد از divها (مثل بلوک‌های کد)
+        html = html.replace(/(<\/hr>)<br>/g, '$1');
         latexBlocks.forEach((blk, idx) => {
             const key = `@@LATEX_${idx}@@`;
             html = html.split(key).join(blk);
@@ -8155,6 +8161,12 @@
         const code = document.getElementById(uniqueId).querySelector('code').textContent;
         const consoleDiv = document.getElementById(`console-${uniqueId}`);
         consoleDiv.style.display = 'block';
+        requestAnimationFrame(() => {
+            consoleDiv.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
         consoleDiv.innerHTML = '<span style="color: #aaa;">> در حال آماده‌سازی محیط اجرا...</span>\n';
         if (lang === 'python' || lang === 'py') {
             try {
@@ -8186,6 +8198,10 @@
                 // اجرای کد اصلی کاربر
                 await pyodide.runPythonAsync(code);
                 consoleDiv.innerHTML += '<span style="color: #555;">\n[اجرا با موفقیت پایان یافت]</span>';
+                consoleDiv.scrollTo({
+                    top: consoleDiv.scrollHeight,
+                    behavior: 'smooth'
+                });
 
             } catch (err) {
                 // نمایش خطا (شامل خطای لغو توسط کاربر)
