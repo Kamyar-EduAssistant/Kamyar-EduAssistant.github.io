@@ -28,6 +28,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
+    <!-- MathLive for Math Typing -->
+     <script src="https://unpkg.com/mathlive"></script>
 
     <!-- Function Plotter for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -57,8 +59,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
     <!-- Pyodide for Python Console Render -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    
+    <!-- Ace for Code Typing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.6/ace.js" integrity="sha512-czfWedq9cnMibaqVP2Sw5Aw1PTTabHxMuTOkYkL15cbCYiatPIbxdV0zwhfBZKNODg0zFqmbz8f7rKmd6tfR/Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.6/ext-language_tools.min.js" integrity="sha512-yszTJ9Ko+JGmUNZYpHStWpMg2rSXrh2WjSSZGydzpHY+qOS/3nSgA+hBHUK3RvLhfjycKL8XWEmfUCZod/mEqA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
         :root {
@@ -69,6 +76,8 @@
             --remainder-color: #f59e0b;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
+            --scrollbar-color: #cbd5e1;
+            --scrollbar-hover: #aabec7;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -79,9 +88,10 @@
                 --remainder-color: #f59e0b;
                 --bg-color: #131314;
                 --card-bg: #30343b;
+                --scrollbar-color: #262a2e;
+                --scrollbar-hover: #3a423b;
             }
         }
-        html { scrollbar-width: thin; }
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f8fafc;
@@ -159,13 +169,10 @@
             transition: max-height 1s ease-in-out;
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { 
-            background: #cbd5e1; 
-            border-radius: 10px; 
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
+        ::-webkit-scrollbar { width: 4px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
         .bg-AIInput {
             background-color: #FFFFFF;
@@ -181,22 +188,20 @@
 
         /* ul و ol اصلی */
         ul, ol {
-            margin: 0.5em 0;
+            margin: 0.5em 0 !important;
+            padding: revert !important;
+            list-style: revert !important;
         }
-
-
         /* بولت‌ها و شماره‌ها */
         ul li::marker, ol li::marker {
             color: #15803d; /* سبز تیره */
             font-weight: bold;
         }
-
         /* فاصله و padding بین آیتم‌ها */
         ul li, ol li {
             margin-bottom: 0.3em;
-            padding-right: 1rem;
+            padding-right: 0.5rem;
         }
-
         /* لیست‌های تو در تو */
         ul li ul, ol li ol {
             margin-top: 0.3em;
@@ -223,7 +228,7 @@
             transform: translateY(1px);
             box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.1), inset 0 -2px 0 0 rgba(0, 0, 0, 0.2);
         }
-        .btn-3d .btn-text { position: relative; z-index: 2; }
+        .btn-3d .btn-text, .btn-3d svg { position: relative; z-index: 2; }
         .ripple {
             position: absolute;
             border-radius: 50%;
@@ -505,7 +510,7 @@
             border-bottom-right-radius: 20px;
             z-index: 1000;
             justify-content: flex-end; /* نمایش در سمت چپ */
-            transform: translateX(-100.06%); /* پیش‌فرض بسته */
+            transform: translateX(-105%); /* پیش‌فرض بسته */
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
         }
         #html-preview-container.show {
@@ -517,9 +522,15 @@
             border: none;
         }
         @media (max-width: 948px) {
-            #html-preview-container, #html-preview-header, #preview-iframe {
+            #html-preview-container.show, #html-preview-header, #preview-iframe {
                 width: 100%;
                 border-radius: 0 !important;
+            }
+            #html-preview-container .show {
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2) !important;
+            }
+            #html-preview-container {
+                box-shadow: none !important;
             }
         }
         @media (min-width: 948px) {
@@ -620,15 +631,56 @@
             border-radius: 18px;
             margin-top: 1rem;
             margin-bottom: 1rem;
-            box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 5%);
+            box-shadow: 0 2px 24px rgba(0, 0, 0, 0.125);
         }
         .ai-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .ai-table th, .ai-table td { border-bottom: 1px solid #d1d5db; border-left: 1px solid #d1d5db; padding: 0.75rem; text-align: right; }
+        .ai-table thead { background: linear-gradient(-45deg, #2b8b40, #009d3c); color: #fff; }
+        .ai-table th, .ai-table td { border-bottom: 1px solid #d1d5db; border-left: 1px solid #d1d5db; padding: 0.75rem; text-align: center; }
         .ai-table th:last-child, .ai-table td:last-child { border-left: none; }
         .ai-table tr:last-child td { border-bottom: none; }
-        .ai-table th { background-color: #f3f4f6; font-weight: bold; }
-        .ai-table tr:nth-child(even) { background-color: #f9fafb; }
-
+        .ai-table th { font-weight: bold; }
+        .ai-table tbody tr:nth-child(odd) { background-color: #ffffff; }
+        .ai-table tbody tr:nth-child(even) { background-color: #f7f7f7; }
+        .ai-table tbody tr:hover { background-color: #ffffff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.149); transform: translateY(-1px); transition: all .15s ease; }
+        .ai-table th:first-child {border-top-right-radius: 18px;}
+        .ai-table th:last-child {border-top-left-radius: 18px;}
+        .ai-table tr:last-child {border-bottom-right-radius: 18px;border-bottom-left-radius: 18px;}
+        .ai-table tr:last-child td:first-child {border-bottom-right-radius: 18px;}
+        .ai-table tr:last-child td:last-child {border-bottom-left-radius: 18px;}
+        blockquote {
+            position: relative;
+            border-radius: 15px;
+            background-color: #25bf2117;
+            border-left: 6px solid #15803d;
+            padding: 8px;
+            padding-right: 2rem;
+        }
+        blockquote::before {
+            color: #15803d;
+            content: '”';
+            font-family: 'AzarMehr','sans-serif';
+            font-weight: bolder;
+            font-size: x-large;
+            position: absolute;
+            right: 0.75rem;
+            top: 0.15rem;
+        }
+        blockquote ul, blockquote ol {margin: 0; padding-right: 16px;}
+        hr {
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom-width: 1px;
+            border-top-width: 0px;
+            border-color: #e5ebe6;
+        }
+        @media (max-width: 640px), (orientation: portrait) and (max-width: 900px) {
+            blockquote {padding-right: 12px;}
+            blockquote::before {position: static; content: '” '; font-size: inherit;}
+            blockquote ul, blockquote ol {padding-right: 0;}
+            ul, ol {list-style-position: inside !important; padding-right: 0 !important;}
+            ul ul, ol ol, ul ol, ol ul {padding-right: 2rem !important;}
+        }
+        
         .converter-input {
             border-radius: 0.75rem; /* گردتر */
             padding: 1rem 1.25rem;
@@ -747,12 +799,9 @@
             text-align: center;
             display: none;
         }
-        .plot-box {
-            animation: successPop 0.6s ease-out;
-        }
-        .plot-height {
-            height: 700px;
-        }
+        .plot-box {animation: successPop 0.6s ease-out;}
+        .axis-label {font-family: 'KaTeX_Main'; font-style: italic;}
+        .plot-height {height: 700px;}
         .comp-function {
             border-left: 10px solid !important;
         }
@@ -803,12 +852,12 @@
             background-position: center;
             transition: background-image 1s ease-in-out; /* برای انتقال نرم بین روز و شب */
         }
-        .poet {
+        poet {
             font-family: 'IranNastaliq','DimaShekasteh';
             line-height: 2.5; /* نستعلیق به فاصله خط بیشتری نیاز دارد */
             font-size: xx-large;
         }
-        .arabic-quran {
+        arabic-quran {
             font-family: 'Amiri Quran', 'QuranTaha', 'Dima Naskh';
         }
 
@@ -827,8 +876,8 @@
             #splash-screen p {
             	color: #86efac; /* رنگ سبز بسیار روشن یا سفید */
             }
-            .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #222325; border-radius: 10px; }
+            ::-webkit-scrollbar { width: 4px; }
+            ::-webkit-scrollbar-thumb { background: #222325; border-radius: 10px; }
             .bg-AIInput {
                 background-color: #1E1F20;
                 border: 1px #1E1F20;
@@ -992,18 +1041,19 @@
             	color: #f8fafc;
             }
             .ai-table th, .ai-table td { 
-            	border-bottom: 1px solid #415c3b;
-                border-left: 1px solid #415c3b;
+                border-bottom: 1px solid #5f7959;
+                border-left: 1px solid #75956e;
             }
-            .ai-table th { 
-            	background-color: #3c5736ab; 
+            .ai-table thead { background: linear-gradient(-45deg, #299100, #008f5a); }
+            .ai-table tbody tr:nth-child(even) { 
+            	background-color: #effffc1c; 
             }
-            .ai-table tr:nth-child(even) { 
-            	background-color: #3e493b8f; 
+            .ai-table tbody tr:nth-child(odd) { 
+            	background-color: #484c4d26; /* یا رنگ اصلی بدنه */
             }
-            .ai-table tr:nth-child(odd) { 
-            	background-color: #222b2394; /* یا رنگ اصلی بدنه */
-            }
+            .ai-table tbody tr:hover { background-color: #ccedc336; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.302); }
+            hr{border-color: #9ea7a175 !important;}
+            
             code, pre code, kbd, samp {
                 background-color: #394739;
             }
@@ -1168,7 +1218,7 @@
             <span class="font-bold text-lg text-center">منوی دسترسی</span>
         </div>
 
-        <nav class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+        <nav class="flex-1 overflow-y-auto p-2 space-y-2">
             <div>
                 <button id="home-menu-btn" onclick="navigateTo('home-page','', this)" class="menu-item w-full flex items-center p-3 rounded-2xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" data-page="home-page">
                     <span class="flex-1 text-right font-bold">🏠 صفحه اصلی</span>
@@ -2412,7 +2462,7 @@
                     <p class="mb-2">عدد مورد نظر را برای تحلیل شمارنده‌ها وارد کنید.</p>
                     <input type="number" id="divisor-input" class="p-2 focus:outline-none border rounded-lg w-full bg-white text-center mb-2" dir="ltr" placeholder="عدد را وارد کنید (مثبت)">
                     <button onclick="analyzeDivisors()" class="p-3 btn-3d btn-green w-full">تحلیل کن</button>
-                    <div id="divisor-results" class="mt-4 hidden overflow-x-hidden border border-gray-300" style="border-radius: 20px; box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 5%);">
+                    <div id="divisor-results" class="mt-4 hidden overflow-x-hidden border border-gray-300" style="border-radius: 20px; box-shadow: 0 2px 24px #00000020;">
                         <table class="w-full text-center table-fixed"style="border-spacing: 0; border: none; border-collapse: separate;">
                             <tbody class="align-center">
                                 <tr><td class="p-3 font-bold w-1/3 border-b border-l border-gray-300">نوع عدد</td><td id="divisor-type" class="p-3 text-center border-b border-gray-300"></td></tr>
@@ -2715,11 +2765,11 @@
                                 </div>
                                 <button onclick="calculateNewton2ndLaw()" class="mt-4 p-3 btn-3d btn-green w-full">محاسبه کن</button>
                                 <p id="kinetic-newton-result" class="mt-4 text-2xl text-center"></p>
-                                <p class="text-gray-500 text-sm mt-6">
-                                    * $F$ (نیرو): نماد Force؛ واحد آن نیوتن ($\text{N}$) است و $\Sigma\vec{F}$ با حرف یونانی سیگما ($\Sigma$) یعنی برایند یا مجموع بردارهای نیرو. (بردار)<br>
-                                    * $m$ (جرم): نماد mass؛ واحد آن کیلوگرم ($\text{kg}$) است. (اسکالر)<br>
-                                    * $a$ (شتاب): نماد acceleration؛ واحد آن متر بر مجذور ثانیه ($\text{m}/\text{s}^2$) است. (بردار)
-                                </p>
+                                <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm mt-6">
+                                    <li>$F$ (نیرو): نماد Force؛ واحد آن نیوتن ($\text{N}$) است و $\Sigma\vec{F}$ با حرف یونانی سیگما ($\Sigma$) یعنی برایند یا مجموع بردارهای نیرو. (بردار)</li>
+                                    <li>$m$ (جرم): نماد mass؛ واحد آن کیلوگرم ($\text{kg}$) است. (اسکالر)</li>
+                                    <li>$a$ (شتاب): نماد acceleration؛ واحد آن متر بر مجذور ثانیه ($\text{m}/\text{s}^2$) است. (بردار)</li>
+                                </ul>
                             </div>
 
                             <div id="kinetic-impulse" class="physics-comp-tool mt-6 hidden p-4 border rounded-lg bg-white shadow">
@@ -2734,12 +2784,12 @@
                                 <div id="impulse-ft-content" class="wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm mt-2 text-center">ضربه نشان می‌دهد که چگونه یک نیروی کوچک در زمانی طولانی، یا یک نیروی عظیم در لحظه‌ای کوتاه، می‌توانند اثرات حرکتی یکسانی ایجاد کنند.</p>
                                     <p class="my-3 text-xl text-center">$$\vec{J} = \Delta \vec{p} = \sum\vec{F} \times \Delta t$$</p>
-                                    <p class="text-gray-500 text-sm my-3">
-                                        * $J$ (ضربه): نماد Impulse؛ واحد آن در سیستم SI نیوتن-ثانیه ($\text{N} \cdot \text{s}$) است. (کمیت برداری)<br>
-                                        * $F$ (نیرو): نماد Force؛ واحد آن نیوتن ($\text{N}$) است.<br>
-                                        * $\Delta t$ (زمان): نماد مدت زمانی؛ واحد آن ثانیه ($\text{s}$) است.<br>
-                                        * $\Delta p$: تغییرات تکانه؛ $\Delta p=p_2-p_1$؛ واحد آن کیلوگرم در متر بر ثانیه ($\text{kg}\cdot\text{m}/\text{s}$) است.
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm my-3">
+                                        <li>$J$ (ضربه): نماد Impulse؛ واحد آن در سیستم SI نیوتن-ثانیه ($\text{N} \cdot \text{s}$) است. (کمیت برداری)</li>
+                                        <li>$F$ (نیرو): نماد Force؛ واحد آن نیوتن ($\text{N}$) است.</li>
+                                        <li>$\Delta t$ (زمان): نماد مدت زمانی؛ واحد آن ثانیه ($\text{s}$) است.</li>
+                                        <li>$\Delta p$: تغییرات تکانه؛ $\Delta p=p_2-p_1$؛ واحد آن کیلوگرم در متر بر ثانیه ($\text{kg}\cdot\text{m}/\text{s}$) است.</li>
+                                    </ul>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <input type="number" inputmode="numeric" id="impulse-J1" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="ضربه (J) [N·s]">
                                         <input type="number" inputmode="numeric" id="impulse-F" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="نیرو (F) [N]">
@@ -2750,13 +2800,13 @@
                                 <div id="impulse-mv-content" class="hidden wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm mt-2 text-center">هرچه ضربه بیشتر، تغییر در سرعت یا جرم در حال حرکت محسوس‌تر.</p>
                                     <p class="my-3 text-xl text-center">$$\mathbf{J} = \Delta \mathbf{p} = m(\mathbf{v}_2 - \mathbf{v}_1)$$</p>
-                                    <p class="text-gray-500 text-sm my-3">
-                                        * $m$: جرم.<br>
-                                        * $v_1$ (سرعت اولیه): نماد Initial Velocity؛ واحد آن متر بر ثانیه ($\text{m/s}$) است.<br>
-                                        * $v_2$ (سرعت ثانویه): نماد Final Velocity؛ واحد آن متر بر ثانیه ($\text{m/s}$) است.<br>
-                                        * $\Delta v$ (تغییرات سرعت): تفاضل سرعت ثانویه از اولیه ($v_2 - v_1$).<br>
-                                        * $p$ (تکانه/اندازه حرکت): نماد Momentum؛ حاصل‌ضرب جرم در سرعت؛ $\mathbf{p} = m\mathbf{v}$.
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm my-3">
+                                        <li>$m$: جرم.</li>
+                                        <li>$v_1$ (سرعت اولیه): نماد Initial Velocity؛ واحد آن متر بر ثانیه ($\text{m/s}$) است.</li>
+                                        <li>$v_2$ (سرعت ثانویه): نماد Final Velocity؛ واحد آن متر بر ثانیه ($\text{m/s}$) است.</li>
+                                        <li>$\Delta v$ (تغییرات سرعت): تفاضل سرعت ثانویه از اولیه ($v_2 - v_1$).</li>
+                                        <li>$p$ (تکانه/اندازه حرکت): نماد Momentum؛ حاصل‌ضرب جرم در سرعت؛ $\mathbf{p} = m\mathbf{v}$.</li>
+                                    </ul>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <input type="number" inputmode="numeric" id="impulse-J2" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="ضربه (J) [kg·m/s]">
                                         <input type="number" inputmode="numeric" id="impulse-m" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="جرم (m) [kg]">
@@ -2782,11 +2832,11 @@
                                     <p class="text-gray-500 text-sm mt-2 text-center">نیروی اصطکاک ایستایی، مانع از شروع حرکت جسم می‌شود و تا آستانه حرکت افزایش می‌یابد.</p>
                                     <p class="mt-3 text-xl text-center">$$f_{s,max} = \mu_s N$$</p>
                                     <p class="mb-3 mt-1 text-xl text-center">$$f_s \leq \mu_s N$$</p>
-                                    <p class="text-gray-500 text-sm my-3">
-                                        * $f_{s,max}$ (اصطکاک ایستایی): حداکثر نیروی مقاومت قبل از حرکت و واحد آن نیوتن [N] است.<br>
-                                        * $\mu_s$ (ضریب اصطکاک ایستایی): وابستگی جنس سطوح؛ معمولاً بین ۰ و ۱.<br>
-                                        * $N$ یا $F_N$ (نیروی عمودی سطح): نیرویی که دو سطح را به هم می‌فشارد [N].
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm my-3">
+                                        <li>$f_{s,max}$ (اصطکاک ایستایی): حداکثر نیروی مقاومت قبل از حرکت و واحد آن نیوتن [N] است.</li>
+                                        <li>$\mu_s$ (ضریب اصطکاک ایستایی): وابستگی جنس سطوح؛ معمولاً بین ۰ و ۱.</li>
+                                        <li>$N$ یا $F_N$ (نیروی عمودی سطح): نیرویی که دو سطح را به هم می‌فشارد [N].</li>
+                                    </ul>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <input type="number" inputmode="numeric" id="fric-fs" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="بیشینۀ نیروی اصطکاک ایستایی (fs) [N]">
                                         <input type="number" inputmode="numeric" id="fric-us" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="ضریب اصطکاک ایستایی (μs)">
@@ -2797,11 +2847,11 @@
                                 <div id="friction-kinetic-content" class="hidden wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm mt-2 text-center">وقتی جسم در حال لغزش است، این نیرو در خلاف جهت حرکت به آن وارد می‌شود.</p>
                                     <p class="my-3 text-xl text-center">$$f_k = \mu_k N$$</p>
-                                    <p class="text-gray-500 text-sm my-3">
-                                        * $f_k$ (اصطکاک جنبشی): نیروی مقاوم در حین حرکت [N].<br>
-                                        * $\mu_k$ (ضریب اصطکاک جنبشی): معمولاً کمتر از ضریب ایستایی است.<br>
-                                        * $N$ یا $F_N$ (نیروی عمودی سطح): واحد آن نیوتن [N] است.
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm my-3">
+                                        <li>$f_k$ (اصطکاک جنبشی): نیروی مقاوم در حین حرکت [N].</li>
+                                        <li>$\mu_k$ (ضریب اصطکاک جنبشی): معمولاً کمتر از ضریب ایستایی است.</li>
+                                        <li>$N$ یا $F_N$ (نیروی عمودی سطح): واحد آن نیوتن [N] است.</li>
+                                    </ul>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <input type="number" inputmode="numeric" id="fric-fk" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="نیروی اصطکاک جنبشی (fk) [N]">
                                         <input type="number" inputmode="numeric" id="fric-uk" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="ضریب اصطکاک جنبشی (μk)">
@@ -2826,12 +2876,12 @@
                                 <div id="work-fd-content" class="wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm text-center my-1">در فیزیک، فقط آن بخش از نیرو که در راستای حرکت است کار انجام می‌دهد.</p>
                                     <p class="my-3 text-xl text-center">$$W = \vec{F} \cdot \vec{d}=Fd\cos(\theta)$$</p>
-                                    <p class="text-gray-500 text-sm mb-2">
-                                        * $W$ (کار): نماد Work؛ واحد آن در سیستم SI ژول ($\text{J}=\text{N}\cdot\text{m}$) است. (کمیت نرده‌ای) <br>
-                                        * $F$ (نیرو): نماد Force؛ واحد آن نیوتن (N) است. <br>
-                                        * $d$ (جابه‌جایی): نماد Displacement؛ واحد آن متر (m) است. (برداری) <br>
-                                        * $\theta$ (زاویه): زاویه بین بردار نیرو و جابه‌جایی برحسب درجه ($^\circ$).
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm mb-2">
+                                        <li>$W$ (کار): نماد Work؛ واحد آن در سیستم SI ژول ($\text{J}=\text{N}\cdot\text{m}$) است. (کمیت نرده‌ای)</li>
+                                        <li>$F$ (نیرو): نماد Force؛ واحد آن نیوتن (N) است.</li>
+                                        <li>$d$ (جابه‌جایی): نماد Displacement؛ واحد آن متر (m) است. (برداری)</li>
+                                        <li>$\theta$ (زاویه): زاویه بین بردار نیرو و جابه‌جایی برحسب درجه ($^\circ$).</li>
+                                    </ul>
                                     <p class="text-gray-500 text-center mb-3">
                                         زاویه‌ ($\theta$) را به <b>درجه</b> وارد کنید (پیش‌فرض ۰ است). اگر نیرو و جابه‌جایی هم‌جهت هستند: ۰، اگر خلاف جهت (نیروی مقاوم): ۱۸۰ وارد کنید.
                                     </p>
@@ -2846,11 +2896,11 @@
                                 <div id="work-mad-content" class="hidden wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm my-1">محاسبه کار زمانی که جسم با شتاب ثابت جابه‌جا می‌شود (نیرو از قانون دوم نیوتن حاصل می‌شود).</p>
                                     <p class="my-3 text-xl text-center">$$W = m a d$$</p>
-                                    <p class="text-gray-500 text-sm my-3">
-                                        * $m$: جرم<br>
-                                        * $a$ (شتاب): نماد acceleration؛ واحد آن متر بر مجذور ثانیه ($\text{m}/\text{s}^2$) است. (بردار) <br>
-                                        * $d$ (جابه‌جایی): نماد Displacement؛ واحد آن متر (m) است. (بردار)
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm my-3">
+                                        <li>$m$: جرم</li>
+                                        <li>$a$ (شتاب): نماد acceleration؛ واحد آن متر بر مجذور ثانیه ($\text{m}/\text{s}^2$) است. (بردار)</li>
+                                        <li>$d$ (جابه‌جایی): نماد Displacement؛ واحد آن متر (m) است. (بردار)</li>
+                                    </ul>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <input type="number" inputmode="numeric" id="work-w2" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="کار (W) [J]">
                                         <input type="number" inputmode="numeric" id="work-m" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="جرم (m) [kg]">
@@ -2862,10 +2912,10 @@
                                 <div id="work-rot-content" class="hidden wipeLeft transition duration-100">
                                     <p class="text-gray-500 text-sm text-center my-1">کار لزوماً در یک خط راست نیست؛ وقتی پیچی را می‌چرخانید، گشتاور شما در بازه زاویه‌ای که پیچیده شده، کار انجام می‌دهد</p>
                                     <p class="my-3 text-xl text-center">$$W = \vec{\tau} \cdot \Delta\vec{\theta}_{rad}$$</p>
-                                    <p class="text-gray-500 text-sm mb-2">
-                                        * $\tau$ (گشتاور): نماد Torque؛ واحد آن نیوتن-متر ($\text{N} \cdot \text{m}$) است. (کمیت برداری) <br>
-                                        * $\Delta\theta_{rad}$ (زاویه دوران برحسب رادیان): تغییر زاویه دوران در واحد رادیان.
-                                    </p>
+                                    <ul style="list-style-type: disc;" class="list-inside text-gray-500 text-sm mb-2">
+                                        <li>$\tau$ (گشتاور): نماد Torque؛ واحد آن نیوتن-متر ($\text{N} \cdot \text{m}$) است. (کمیت برداری)</li>
+                                        <li>$\Delta\theta_{rad}$ (زاویه دوران برحسب رادیان): تغییر زاویه دوران در واحد رادیان.</li>
+                                    </ul>
                                     <p class="text-gray-500 text-center my-3">زاویه چرخیده شده را به <b>درجه</b> وارد کنید؛ برنامه خودکار به رادیان تبدیل می‌کند.</p>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <input type="number" inputmode="numeric" id="work-w3" dir="ltr" class="p-2 focus:outline-none border text-center bg-white rounded-lg w-full" placeholder="کار (W) [J]">
@@ -2944,7 +2994,7 @@
                 <div id="stellarium" class="astronomy-tool hidden bg-white p-1 rounded-lg shadow">
                     <p class="mt-2 mb-4 text-lg text-center"><b>کاوش کنید، یاد بگیرید و شگفتی کیهان را در همین لحظه ببینید.</b></p>
                     <iframe id="stellarium-iframe" 
-                        src="" style="height: 85vh;"
+                        src="" style="height: 85vh; scroll-margin-top: 90px;"
                         frameborder="0" allowfullscreen 
                         class="w-full h-full border rounded-lg shadow-lg"
                         title="Stellarium Web Viewer">
@@ -3081,9 +3131,9 @@
     <aside id="html-preview-container" onclick="event.stopPropagation()">
         <div id="html-preview-header" class="flex justify-between items-center p-4 bg-gray-100 border-b" style="border-top-right-radius: 20px;">
             <h3 class="font-bold">پیش‌نمایش بصری</h3>
-            <button onclick="closeHtmlPreview()" class="text-red-500 font-bold">✕</button>
+            <button onclick="closeHtmlPreview()" class="text-red-500 font-bold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
-        <iframe id="preview-iframe" style="border-bottom-right-radius: 20px;"></iframe>
+        <iframe id="preview-iframe" style="border-bottom-right-radius: 20px; overflow-y: auto;"></iframe>
     </aside>
 
     <script>
@@ -4007,7 +4057,7 @@
                 
                 if (candidate && candidate.content?.parts?.[0]?.text) {
                     let rawText = candidate.content.parts[0].text;
-
+                    window.solveAIOutput = rawText;
                     const parsed = parseAndStyleResponse(rawText);
                     const processedText = replacePlotsWithContainers(parsed);
                     outputElement.innerHTML = processedText;
@@ -4114,9 +4164,7 @@
         * از Fallback (ایجاد TextArea موقت) برای سازگاری در دستگاه‌های موبایل استفاده می‌کند.
         */
         function copyAiResponse() {
-            const outputDiv = document.getElementById('ai-output');
-            // استفاده از innerText برای گرفتن متن خالص بدون HTML
-            const responseText = outputDiv.innerText;
+            const responseText = window.solveAIOutput || "";
 
             // --- تابع کمکی Fallback برای کپی کردن ---
             function fallbackCopy(text) {
@@ -6932,7 +6980,7 @@
 
         if (type === 'sum') {
             vecs.forEach(v => { res.x += v.x; res.y += v.y; res.z += v.z; });
-            latexStr = `\\vec{R} = \\sum_{i=1}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+            latexStr = `\\vec{R} = \\sum_{i=1}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix}`;
         } else if (type === 'diff') {
             // تفاضل بردار اول از دوم (یا به ترتیب ورود)
             res.x = vecs[0].x - vecs[1].x;
@@ -6943,9 +6991,9 @@
                 res.x -= vecs[i].x; res.y -= vecs[i].y; res.z -= vecs[i].z;
             }
             if (vecs.length === 2) {
-                latexStr = `\\vec{R} = \\vec{V}_1 - \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+                latexStr = `\\vec{R} = \\vec{V}_1 - \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix}`;
             } else {
-                latexStr = `\\vec{R} = \\vec{V}_1 - \\sum_{i=2}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+                latexStr = `\\vec{R} = \\vec{V}_1 - \\sum_{i=2}^{${vecs.length}} \\vec{V}_i = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix}`;
             }
         } else if (type === 'dot') {
             const dot = (vecs[0].x * vecs[1].x) + (vecs[0].y * vecs[1].y) + (vecs[0].z * vecs[1].z);
@@ -6954,7 +7002,7 @@
             res.x = vecs[0].y * vecs[1].z - vecs[0].z * vecs[1].y;
             res.y = vecs[0].z * vecs[1].x - vecs[0].x * vecs[1].z;
             res.z = vecs[0].x * vecs[1].y - vecs[0].y * vecs[1].x;
-            latexStr = `\\vec{V}_1 \\times \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix} = (${res.x}, ${res.y}, ${res.z})`;
+            latexStr = `\\vec{V}_1 \\times \\vec{V}_2 = \\begin{bmatrix} {${res.x}} \\\\ {${res.y}} \\\\ {${res.z}} \\end{bmatrix}`;
         }
 
         // اضافه کردن جزئیات اندازه و زاویه به لاتکس
@@ -7865,11 +7913,13 @@
     }
     function scrollToStellarium() {
         const iframe = document.getElementById('stellarium-iframe');
-        requestAnimationFrame(() => {
-            iframe.scrollIntoView({
-                top: 0,
-                behavior: 'smooth'
-            });
+        const header = document.querySelector('header');
+
+        const headerHeight = header.offsetHeight;
+
+        window.scrollTo({
+            top: iframe.getBoundingClientRect().top + window.scrollY - headerHeight,
+            behavior: 'smooth'
         });
     }
 
@@ -7901,24 +7951,216 @@
     });
 
     function parseAndStyleResponse(text) {
+        // 1. Escape HTML برای متون ساده
+        function escapeHtml(s) {
+            return s
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        function protectLatex(pattern, display){
+            html = html.replace(pattern, (m, inner)=>{
+                const key=`@@LATEX_${latexBlocks.length}@@`;
+                latexBlocks.push({ raw: inner, isBlock: display });
+                return key;
+            });
+        }
+
+        function protectBlock(pattern,replacementFn){
+            html = html.replace(pattern,(match,...args)=>{
+                const key=`@@BLOCK_${protectedBlocks.length}@@`;
+                protectedBlocks.push(replacementFn(match,...args));
+                return key;
+            });
+        }
+
+        // 2. تابع داخلی برای پردازش جداول
+        function processTables(text) {
+            const tableRegex = /((?:\|.*\|[ \t]*\r?\n)\|[ \t:.\-|]+\r?\n(?:\|.*\|[ \t]*\r?\n?)*)/g;
+            return text.replace(tableRegex, (table) => {
+                const rows = table.trim().split(/\r?\n/);
+                if (rows.length < 2) return table;
+                const separator = rows[1];
+                if (!/^(\|\s*[:\-]+\s*)+\|?$/.test(separator)) {
+                    return table;
+                }
+                const headerCells = rows[0].split('|').slice(1, -1).map(h => `<th>${h.trim()}</th>`).join('');
+                let body = '';
+                for(let i = 2; i < rows.length; i++) {
+                    const line = rows[i].trim();
+                    if (!line) continue;
+                    const cells = rows[i].split('|').slice(1, -1).map(c => `<td>${c.trim()}</td>`).join('');
+                    body += `<tr>${cells}</tr>`;
+                }
+                return `<div class="table-wrapper overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
+            });
+        }
+
+        // 3. تابع داخلی برای پردازش محتوای بلوک‌کوتیشن
+        function processBlockquoteContent(content) {
+            let processed = parseMarkdownLists(content);
+            processed = processed
+                .replace(/^# (.*$)\n/gm, '<h2 class="text-3xl font-bold my-3">$1</h2>')
+                .replace(/^## (.*$)\n/gm, '<h3 class="text-2xl font-semibold mt-4 mb-2">$1</h3>')
+                .replace(/^### (.*$)\n/gm, '<h4 class="text-xl font-semibold mt-4 mb-2">$1</h4>')
+                .replace(/^#### (.*$)\n/gm, '<h5 class="text-lg font-semibold mt-4 mb-2">$1</h5>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
+                .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
+                    // اگر داخل بک‌تیک فقط یک placeholder لاتکس است، بک‌تیک را حذف کن و placeholder را دست‌نخورده بگذار
+                    if (/^@@LATEX_\d+@@$/.test(inlineCode.trim())) {
+                        return inlineCode;
+                    }
+                    const escaped = inlineCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    return `<code class="inline-code px-1 rounded cursor-pointer" data-code="${escaped}">${escaped}</code>`;
+                })
+                .replace(/\n/g, '<br>');
+
+            // پاکسازی <br> اضافی
+            processed = processed
+                .replace(/(<\/h3>)<br>/g, '$1')
+                .replace(/(<\/h2>)<br>/g, '$1')
+                .replace(/(<\/h4>)<br>/g, '$1')
+                .replace(/(<\/h5>)<br>/g, '$1')
+                .replace(/<br><br>/g, '<br>')
+                .replace(/<\/ul><br>/g, '</ul>')
+                .replace(/<\/ol><br>/g, '</ol>');
+
+            return processed;
+        }
+
+        // 4. تابع داخلی برای پردازش لیست‌ها
+        function parseMarkdownLists(text) {
+            const lines = text.split('\n');
+            let result = '';
+            let stack = [];
+            
+            let liOpen = false;
+            let liLevel = -1;
+
+            function openList(type) {
+                stack.push(type);
+                result += `<${type}>`;
+            }
+
+            function closeList() {
+                const type = stack.pop();
+                result += `</${type}>`;
+            }
+
+            function closeLiIfOpen() {
+                if (liOpen) {
+                    result += `</li>`;
+                    liOpen = false;
+                    liLevel = -1;
+                }
+            }
+
+            function closeToLevel(level) {
+                if (liOpen && stack.length > level) closeLiIfOpen();
+                while (stack.length > level) closeList();
+            }
+
+            for (let line of lines) {
+                const listMatch = line.match(/^(\s*)([-*]|\d+[\.\)]) (.*)$/);
+
+                if (!listMatch) {
+                    const nestedBqMatch = line.match(/(?:^|\n)(\s*)> (.*)$/);
+                    if (nestedBqMatch && liOpen) {
+                        const content = nestedBqMatch[2].trim();
+                        const processedContent = processBlockquoteContent(content);
+                        result += `<blockquote class="my-3">${processedContent}</blockquote>`;
+                        continue;
+                    }
+                    
+                    const contMatch = line.match(/^(\s+)(.*)$/);
+                    if (contMatch && liOpen) {
+                        const cont = contMatch[2].trim();
+                        if (cont.length) {
+                            result += `<p>${escapeHtml(cont)}</p>`;
+                        }
+                        continue;
+                    }
+                    
+                    closeLiIfOpen();
+                    closeToLevel(0);
+                    result += escapeHtml(line) + '\n';
+                    continue;
+                }
+
+                const indent = listMatch[1].length;
+                const marker = listMatch[2];
+                const content = listMatch[3];
+                const level = Math.floor(indent / 4);
+                const type = /^\d+[\.\)]/.test(marker) ? 'ol' : 'ul';
+
+                if (liOpen && level !== liLevel) closeLiIfOpen();
+
+                if (level > stack.length - 1) {
+                    openList(type);
+                } else if (level < stack.length - 1) {
+                    closeLiIfOpen();
+                    closeToLevel(level + 1);
+                }
+
+                if (stack[stack.length - 1] !== type) {
+                    closeLiIfOpen();
+                    closeList();
+                    openList(type);
+                }
+
+                closeLiIfOpen();
+                result += `<li>${escapeHtml(content)}`;
+                liOpen = true;
+                liLevel = level;
+            }
+
+            closeLiIfOpen();
+            closeToLevel(0);
+            return result;
+        }
+
+        // 5. تابع داخلی برای پردازش همزمان بلوک‌کوتیشن‌ها و لیست‌های عادی
+        function processBlockquotesAndNormalLists(text) {
+            const bqRegex = /(?:^|\n)>[^\n]*(?:\n>[^\n]*)*/g;
+            
+            let lastIndex = 0;
+            let result = '';
+            let match;
+
+            while ((match = bqRegex.exec(text)) !== null) {
+                const normalTextBefore = text.slice(lastIndex, match.index);
+                if (normalTextBefore) {
+                    result += parseMarkdownLists(normalTextBefore);
+                }
+
+                let bqContent = match[0].replace(/^(\n)?/, '');
+                const cleanedBqLines = bqContent.split('\n').map(line => line.replace(/^>\s?/, ''));
+                const rawBqContent = cleanedBqLines.join('\n');
+                
+                let processedBqContent = parseMarkdownLists(rawBqContent);
+                processedBqContent = processBlockquoteContent(rawBqContent);
+
+                result += `<blockquote class="my-3">${processedBqContent}</blockquote>`;
+                
+                lastIndex = bqRegex.lastIndex;
+            }
+
+            if (lastIndex < text.length) {
+                const normalTextAfter = text.slice(lastIndex);
+                result += parseMarkdownLists(normalTextAfter);
+            }
+
+            return result;
+        }
+
+        // 6. منطق اصلی پردازش
         let html = text;
+
         const latexBlocks = [];
         const protectedBlocks = [];
-        function protectLatex(pattern) {
-            html = html.replace(pattern, (m) => {
-                const key = `@@LATEX_${latexBlocks.length}@@`;
-                latexBlocks.push(m);
-                return key;
-            });
-        }
-        function protectBlock(pattern, replacementFn) {
-            html = html.replace(pattern, (match, ...args) => {
-                const key = `@@BLOCK_${protectedBlocks.length}@@`;
-                const replacementHtml = replacementFn(match, ...args);
-                protectedBlocks.push(replacementHtml);
-                return key;
-            });
-        }
 
         protectBlock(/```(\S*)\n([\s\S]*?)```/g, (match, lang, code) => {
             code = code.trim(); 
@@ -7930,7 +8172,7 @@
                 .replace(/'/g, "&#039;");
             const uniqueId = 'code-' + Date.now() + Math.random().toString(16).substring(2, 8);
             let visibleLang;
-            if (lang === 'python') visibleLang = 'Python';
+            if (lang === 'python' || lang === 'py') visibleLang = 'Python';
             else if (lang === 'javascript' || lang === 'js') visibleLang = 'JavaScript';
             else if (lang === 'html') visibleLang = 'HTML';
             else if (lang === 'css') visibleLang = 'CSS';
@@ -7954,9 +8196,9 @@
                         <span class="mx-1">پیش‌نمایش</span>
                     </button>`;
             } else if (lang.toLowerCase() === 'latex' || lang.toLowerCase() === 'tex') {
-                previewBtn = `<button onclick="renderLatexCode('${uniqueId}')" class="preview-btn flex items-center p-1 text-gray dark:hover:text-cyan-500 hover:text-blue-800 transition">
+                previewBtn = `<button onclick="renderLatexCode('${uniqueId}')" class="preview-btn flex items-center p-1 text-gray dark:hover:text-pink-500 hover:text-purple-800 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        <span class="mx-1">پیش‌نمایش</span>
+                        <span class="mx-1">رندر</span>
                     </button>`;
             } else {
                 previewBtn = '';
@@ -7969,59 +8211,81 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     <span class="mx-1">اجرا</span>
                 </button>` : '';
-            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag font-bold">${visibleLang}</span><div class="flex items-center">${previewBtn}${runBtn}<button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="mx-1">کپی</span></button></div></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre><div id="console-${uniqueId}" class="console-output"></div></div>`;
+            const copyBtn = `<button onclick="copyCodeBlock('${uniqueId}')" title="کپی کردن قطعه کد" class="copy-btn flex items-center p-1 text-gray hover:text-green-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span class="mx-1">کپی</span>
+                </button>`;
+            return `<div class="code-block-container relative my-4 rounded-lg overflow-hidden shadow-md"><div class="flex justify-between items-center p-2 bg-green-code-head text-black text-xs"><span class="language-tag font-bold">${visibleLang}</span><div class="flex items-center">${previewBtn}${runBtn}${copyBtn}</div></div><pre id="${uniqueId}" dir="ltr" class="p-4 bg-gray-900 text-white overflow-x-auto whitespace-pre"><code class="language-${lang}">${escapedCode}</code></pre><div id="console-${uniqueId}" class="console-output"></div></div>`;
         });
 
-        // 1. Handle Tables
-        const tableRegex = /((?:\|.*\|[ \t]*\r?\n)\|[ \t:.\-|]+\r?\n(?:\|.*\|[ \t]*\r?\n?)*)/g;
-        html = html.replace(tableRegex, (table) => {
-            const rows = table.trim().split(/\r?\n/);
-            if (rows.length < 2) return table;
-            const separator = rows[1];
-            if (!/^(\|\s*[:\-]+\s*)+\|?$/.test(separator)) {
-                return table;
-            }
-            const headerCells = rows[0].split('|').slice(1, -1).map(h => `<th>${h.trim()}</th>`).join('');
-            let body = '';
-            // Start from row 2 to skip header separator
-            for(let i = 2; i < rows.length; i++) {
-                const line = rows[i].trim();
-                if (!line) continue;
-                const cells = rows[i].split('|').slice(1, -1).map(c => `<td>${c.trim()}</td>`).join('');
-                body += `<tr>${cells}</tr>`;
-            }
-            return `<div class="table-wrapper overflow-x-auto"><table class="ai-table"><thead><tr>${headerCells}</tr></thead><tbody>${body}</tbody></table></div>`;
-        });
-        
-        // 2. Headers, Bold, Images, Newlines
+        protectLatex(/\$\$([\s\S]+?)\$\$/g, true);
+        protectLatex(/\$([^$\n]+?)\$/g, false);
+        protectLatex(/\\\[([\s\S]+?)\\\]/g, true);
+        protectLatex(/\\\(([\s\S]+?)\\\)/g, false);
+        // 1. استخراج و پردازش بلوک‌کوتیشن‌ها و لیست‌ها
+        html = processBlockquotesAndNormalLists(html);
+
+        // 2. پردازش جداول
+        html = processTables(html);
+
+        // 3. پردازش هدرها، بولد، ایتالیک، تصاویر، خط افقی و کد
         html = html
-            .replace(/^### (.*$)/gm, '<h2 class="text-3xl font-bold my-3">$1</h2>')
-            .replace(/^#### (.*$)/gm, '<h3 class="text-2xl font-semibold mt-4 mb-2">$1</h3>')
-            .replace(/^##### (.*$)/gm, '<h4 class="text-xl font-semibold mt-4 mb-2">$1</h4>')
-            .replace(/^###### (.*$)/gm, '<h5 class="text-lg font-semibold mt-4 mb-2">$1</h5>')
+            .replace(/^# (.*$)\n/gm, '<h2 class="text-3xl font-bold my-3">$1</h2>')
+            .replace(/^## (.*$)\n/gm, '<h3 class="text-2xl font-semibold mt-4 mb-2">$1</h3>')
+            .replace(/^### (.*$)\n/gm, '<h4 class="text-xl font-semibold mt-4 mb-2">$1</h4>')
+            .replace(/^#### (.*$)\n/gm, '<h5 class="text-lg font-semibold mt-4 mb-2">$1</h5>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<i>$1</i>')
             .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg shadow-md mx-auto max-w-full h-auto"><p class="text-sm text-center">$1</p>')
-            .replace(/^---$/gm, '<hr class="my-6 border-t-0 border-b border-[#e5ebe6] dark:border-[#353936]">')
+            .replace(/(?:^|\n)---(?:\r?\n|<br>|\n)(?:^|\n)/g, '<hr class="my-6 border-t-0 border-b border-[#e5ebe6] dark:border-[#353936]">')
             .replace(/`([^`\n]+)`/g, (m, inlineCode) => {
+                if (/^@@LATEX_\d+@@$/.test(inlineCode.trim())) {
+                    return inlineCode;
+                }
                 const escaped = inlineCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 return `<code class="inline-code px-1 rounded cursor-pointer" data-code="${escaped}">${escaped}</code>`;
-            })
-            .replace(/\n/g, '<br>');
+            });
+
+        // 4. تبدیل خطوط جدید به <br>
+        html = html.replace(/\n/g, '<br>');
+
+        // 5. پاکسازی نهایی
+        html = html
+            .replace(/(<\/h3>)<br>/g, '$1')
+            .replace(/(<\/h2>)<br>/g, '$1')
+            .replace(/(<\/h4>)<br>/g, '$1')
+            .replace(/(<\/h5>)<br>/g, '$1')
+            .replace(/(<\/div>)<br>/g, '$1')
+            .replace(/(<\/blockquote>)<br><br>/g, '$1')
+            .replace(/(<\/blockquote>)<br>/g, '$1')
+            .replace(/(<\/hr>)<br>/g, '$1')
+            .replace(/<br><br>/g, '<br>')
+            .replace(/<\/ul><br>/g, '</ul>')
+            .replace(/<\/ol><br>/g, '</ol>');
+
+        latexBlocks.forEach((item, i) => {
+            const key = `@@LATEX_${i}@@`;
+            let renderedHtml = '';
             
-        
-        // 3. Clean up
-        html = html.replace(/(<\/h3>)<br>/g, '$1').replace(/(<\/h2>)<br>/g, '$1').replace(/(<\/h4>)<br>/g, '$1').replace(/(<\/h5>)<br>/g, '$1'); // پاک کردن <br> بعد از هدرها
-        html = html.replace(/(<\/div>)<br>/g, '$1'); // پاک کردن <br> بعد از divها (مثل بلوک‌های کد)
-        html = html.replace(/(<\/hr>)<br>/g, '$1');
-        latexBlocks.forEach((blk, idx) => {
-            const key = `@@LATEX_${idx}@@`;
-            html = html.split(key).join(blk);
+            if (typeof katex !== 'undefined') {
+                try {
+                    renderedHtml = katex.renderToString(item.raw.trim(), {
+                        displayMode: item.isBlock, // فرمول‌های $$ و \[ \] به صورت Display در مرکز رندر می‌شوند
+                        throwOnError: false
+                    });
+                } catch (e) {
+                    renderedHtml = escapeHtml(item.raw);
+                }
+            } else {
+                renderedHtml = escapeHtml(item.raw);
+            }
+
+            // نکته مهم: استفاده از ()=> renderedHtml مانع خراب شدن علامت‌های $ درون فرمول‌ها توسط JS می‌شود
+            html = html.replace(key, () => renderedHtml);
         });
 
-        // بازگرداندن بلوک‌ها:
-        protectedBlocks.forEach((blk, idx) => {
-            const key = `@@BLOCK_${idx}@@`;
-            html = html.split(key).join(blk);
+        protectedBlocks.forEach((blk, i) => {
+            html = html.replace(`@@BLOCK_${i}@@`, blk);
         });
 
         return html;
@@ -8151,6 +8415,13 @@
         }
     }
 
+    function scrollElementBelowHeader(element, headerHeight = 90) {
+        const y = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({
+            top: y,
+            behavior: "smooth"
+        });
+    }
     let pyodide = null;
     async function initPyodide() {
         if (!pyodide) {
@@ -8162,10 +8433,7 @@
         const consoleDiv = document.getElementById(`console-${uniqueId}`);
         consoleDiv.style.display = 'block';
         requestAnimationFrame(() => {
-            consoleDiv.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            scrollElementBelowHeader(consoleDiv);
         });
         consoleDiv.innerHTML = '<span style="color: #aaa;">> در حال آماده‌سازی محیط اجرا...</span>\n';
         if (lang === 'python' || lang === 'py') {
@@ -8195,14 +8463,11 @@
 
     builtins.input = custom_input
                 `);
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
                 // اجرای کد اصلی کاربر
                 await pyodide.runPythonAsync(code);
                 consoleDiv.innerHTML += '<span style="color: #555;">\n[اجرا با موفقیت پایان یافت]</span>';
-                consoleDiv.scrollTo({
-                    top: consoleDiv.scrollHeight,
-                    behavior: 'smooth'
-                });
-
+                scrollElementBelowHeader(consoleDiv);
             } catch (err) {
                 // نمایش خطا (شامل خطای لغو توسط کاربر)
                 consoleDiv.innerHTML += `\n<span style="color:#ff6b6b">❌ خطا: ${err.message}</span>`;
@@ -8215,6 +8480,7 @@
                 consoleDiv.innerHTML = '';
                 console.log = function(msg) {
                     consoleDiv.innerText += msg + '\n';
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
                 };
                 eval(code);
                 console.log = oldLog; // بازگرداندن کنسول
