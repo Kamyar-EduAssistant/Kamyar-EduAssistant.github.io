@@ -8112,7 +8112,12 @@
                 }
 
                 closeLiIfOpen();
-                result += `<li>${escapeHtml(content)}`;
+                let valueAttr = '';
+                if (type === 'ol') {
+                    const numMatch = marker.match(/^(\d+)/);
+                    if (numMatch) valueAttr = ` value="${parseInt(numMatch[1], 10)}"`;
+                }
+                result += `<li${valueAttr}>${escapeHtml(content)}`;
                 liOpen = true;
                 liLevel = level;
             }
